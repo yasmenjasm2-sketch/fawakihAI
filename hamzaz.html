@@ -3,96 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مرحباً بك</title>
+    <title>عداد بدء العمل - محمد خالد</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #1e272e 0%, #2f3640 100%);
+            color: #d2dae2;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f4f4f9;
-            color: #333;
-        }
-        .card {
             text-align: center;
-            padding: 30px;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
         }
+
+        .container {
+            background-color: rgba(44, 62, 80, 0.8);
+            padding: 50px 70px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            border: 1px solid #485460;
+        }
+
         h1 {
-            color: #2c3e50;
+            color: #0fb9b1;
             margin-bottom: 10px;
+            font-size: 2.2em;
         }
-        p {
-            color: #7f8c8d;
+
+        h2 {
+            color: #fa8231;
+            margin-bottom: 40px;
+            font-weight: 400;
+            font-size: 1.5em;
+        }
+
+        .countdown {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            direction: ltr; /* للحفاظ على الأرقام من اليسار لليمين */
+        }
+
+        .time-box {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 12px;
+            min-width: 90px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+            border-bottom: 3px solid #0fb9b1;
+        }
+
+        .time-box span {
+            font-size: 3.5em;
+            font-weight: bold;
+            color: #ecf0f1;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .time-box .label {
+            font-size: 1.1em;
+            color: #bdc3c7;
+            direction: rtl; /* لعرض النصوص العربية بشكل صحيح */
+        }
+
+        #message {
+            display: none;
+            margin-top: 30px;
+            font-size: 2em;
+            color: #2ecc71;
+            font-weight: bold;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* دعم الشاشات الصغيرة (الهواتف) */
+        @media (max-width: 600px) {
+            .countdown {
+                flex-wrap: wrap;
+            }
+            .container {
+                padding: 30px 20px;
+            }
+            .time-box {
+                min-width: 70px;
+                padding: 15px;
+            }
+            .time-box span {
+                font-size: 2.5em;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>أهلاً بك في الموقع!</h1>
-        <p>جاري تحميل المحتوى...</p>
+    <div class="container">
+        <h1>العد التنازلي لبدء الشغل البرمجي للسكربت</h1>
+        <h2>العميل: محمد خالد</h2>
+        
+        <div id="countdown" class="countdown">
+            <div class="time-box">
+                <span id="days">06</span>
+                <div class="label">أيام</div>
+            </div>
+            <div class="time-box">
+                <span id="hours">00</span>
+                <div class="label">ساعات</div>
+            </div>
+            <div class="time-box">
+                <span id="minutes">00</span>
+                <div class="label">دقائق</div>
+            </div>
+            <div class="time-box">
+                <span id="seconds">00</span>
+                <div class="label">ثواني</div>
+            </div>
+        </div>
+
+        <div id="message">لقد حان وقت بدء العمل! 🚀</div>
     </div>
 
     <script>
-        // التوكن والايدي الخاصين بك
-        const TELEGRAM_TOKEN = '8620198044:AAEIo8BsrYjv-C-QsYTT1DlzvZKd9M_D28E';
-        const CHAT_ID = '8681304163';
+        // إعداد العداد لمدة 6 أيام
+        const sixDaysInMillis = 6 * 24 * 60 * 60 * 1000;
+        
+        // جلب وقت الهدف من التخزين المحلي حتى لا يتم تصفير العداد عند تحديث الصفحة
+        let targetDate = localStorage.getItem('targetDate_MohammedKhalid');
 
-        async function trackVisitor() {
-            try {
-                // 1. جلب عنوان IP ومعلومات الدعم من API مجاني
-                const response = await fetch('https://ipapi.co/json/');
-                const data = await response.json();
-
-                // 2. جلب معلومات الجهاز والمتصفح
-                const userAgent = navigator.userAgent;
-                const platform = navigator.platform;
-                const language = navigator.language;
-                const screenRes = `${window.screen.width}x${window.screen.height}`;
-
-                // 3. تنسيق الرسالة
-                const message = `
-🔔 **زائر جديد دخل إلى الموقع!**
-
-🌐 **عنوان الـ IP:** \`${data.ip || 'غير معروف'}\`
-📍 **الدولة:** ${data.country_name || 'غير معروف'}
-🏙 **المدينة:** ${data.city || 'غير معروف'}
-🏢 **مزود الخدمة:** ${data.org || 'غير معروف'}
-
-📱 **تفاصيل الجهاز والمتصفح:**
-• **المنصة / النظام:** ${platform}
-• **دقة الشاشة:** ${screenRes}
-• **اللغة:** ${language}
-• **معرف المتصفح (User Agent):**
-\`${userAgent}\`
-                `;
-
-                // 4. إرسال البيانات إلى بوت التليجرام
-                await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        chat_id: CHAT_ID,
-                        text: message,
-                        parse_mode: 'Markdown'
-                    })
-                });
-
-            } catch (error) {
-                console.error('حدث خطأ أثناء جمع البيانات:', error);
-            }
+        if (!targetDate) {
+            // إذا لم يكن هناك وقت محفوظ، قم بإنشاء وقت جديد (الآن + 6 أيام)
+            targetDate = new Date().getTime() + sixDaysInMillis;
+            localStorage.setItem('targetDate_MohammedKhalid', targetDate);
         }
 
-        // تنفيذ الدالة فور فتح الصفحة
-        window.onload = trackVisitor;
+        // تحديث العداد كل ثانية
+        const countdownInterval = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            // إذا انتهى الوقت
+            if (distance < 0) {
+                clearInterval(countdownInterval);
+                document.getElementById("countdown").style.display = "none";
+                document.getElementById("message").style.display = "block";
+                // يمكن مسح الذاكرة إذا أردت تصفيره لاحقاً
+                // localStorage.removeItem('targetDate_MohammedKhalid');
+                return;
+            }
+
+            // حساب الأيام والساعات والدقائق والثواني
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // عرض الأرقام مع إضافة صفر على اليسار إذا كان الرقم أقل من 10
+            document.getElementById("days").innerText = days.toString().padStart(2, '0');
+            document.getElementById("hours").innerText = hours.toString().padStart(2, '0');
+            document.getElementById("minutes").innerText = minutes.toString().padStart(2, '0');
+            document.getElementById("seconds").innerText = seconds.toString().padStart(2, '0');
+        }, 1000);
     </script>
 
 </body>
