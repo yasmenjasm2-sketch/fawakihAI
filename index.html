@@ -122,7 +122,7 @@
             pointer-events: none;
         }
 
-        /* العلامة الدائرية المتحركة الاحترافية */
+        /* العلامة الدائرية المتحركة الاحترافية (تمت إزالة النقطة البيضاء) */
         .target-marker {
             position: absolute;
             top: 50%;
@@ -137,19 +137,6 @@
             box-shadow: 0 0 15px var(--neon-primary), inset 0 0 10px var(--neon-secondary);
             animation: spinAndPulse 1.2s linear infinite;
             z-index: 10;
-        }
-
-        .target-marker::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 8px;
-            height: 8px;
-            background: #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #fff, 0 0 20px var(--neon-secondary);
         }
 
         @keyframes spinAndPulse {
@@ -315,7 +302,7 @@
         
         <div class="board-wrapper">
             <!-- استخدام اسم الصورة المطلوبة -->
-            <img src="ses.jpg" alt="Roulette Board">
+            <img src="1000258780_2.jpg" alt="Roulette Board">
             
             <div class="grid-overlay" id="gridOverlay">
                 <!-- يتم حقن الخلايا عبر الجافاسكربت -->
