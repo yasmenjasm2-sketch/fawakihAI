@@ -9,7 +9,7 @@
             --bg-color: #08000f;
             --neon-primary: #a200ff;
             --neon-secondary: #ff00ea;
-            --timer-color: #ffd700; /* لون العداد الأصفر المضيء */
+            --timer-color: #ffd700; 
             --text-glow: 0 0 10px rgba(162, 0, 255, 0.5);
             --danger-color: #ff3366;
         }
@@ -27,10 +27,9 @@
             overflow-x: hidden;
             overflow-y: auto;
             position: relative;
-            padding-bottom: 120px; /* مساحة للعداد بالأسفل */
+            padding-bottom: 100px; 
         }
 
-        /* إصلاح تأثير الخطوط المتحركة في الخلفية لتظهر بوضوح */
         .animated-background {
             position: fixed;
             top: 0;
@@ -61,7 +60,6 @@
             100% { top: 100%; }
         }
 
-        /* حاوية الأداة المركزية */
         .main-container {
             width: 100%;
             max-width: 600px;
@@ -84,7 +82,6 @@
             text-transform: uppercase;
         }
 
-        /* لوحة الروليت (تم إزالة البطاقة والإطارات) */
         .board-wrapper {
             position: relative;
             width: 100%;
@@ -97,22 +94,22 @@
         .board-wrapper img {
             width: 100%;
             display: block;
-            border-radius: 5px; /* حواف ناعمة للصورة فقط إذا لزم الأمر */
+            border-radius: 5px; 
         }
 
         /* 
-           تعديل موقع الشبكة لتطابق الأرقام. 
-           إذا كانت العلامات غير مضبوطة تماماً على صورتك، 
-           قم بتغيير النسب المئوية (top, left, width, height) قليلاً.
+           إصلاح وتعديل الشبكة لتطابق المسافات بدقة احترافية.
+           تمت إضافة عامود وهمي في الأخير ليمثل مساحة الـ (2to1) كي تنضبط الأرقام.
         */
         .grid-overlay {
             position: absolute;
-            top: 15.5%; 
-            left: 5%;
-            width: 90%;
-            height: 38%;
+            top: 17.5%;      /* تعديل المسافة العلوية */
+            left: 2.8%;      /* تعديل المسافة اليسرى */
+            width: 94.5%;    /* تعديل العرض الكلي ليغطي الجدول كاملاً */
+            height: 33.5%;   /* تعديل الارتفاع ليغطي الأرقام فقط */
             display: grid;
-            grid-template-columns: 1.15fr repeat(12, 1fr); /* تم ضبط الأعمدة */
+            /* تقسيم دقيق: الصفر، ثم 12 رقم، ثم عامود 2to1 الوهمي */
+            grid-template-columns: 1.15fr repeat(12, 1fr) 0.9fr; 
             grid-template-rows: repeat(3, 1fr);
             z-index: 5;
         }
@@ -120,13 +117,14 @@
         .cell {
             position: relative;
             pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: block; /* تغيير من flex لتسهيل التوسيط المطلق */
         }
 
+        /* الرادار الدوار - تم ضبط التوسيط التام */
         .target-marker {
             position: absolute;
+            top: 50%;
+            left: 50%;
             width: 75%;
             aspect-ratio: 1 / 1;
             border-radius: 50%;
@@ -138,13 +136,13 @@
             z-index: 10;
         }
 
+        /* تعديل الأنيميشن ليتوافق مع التوسيط التام (-50%, -50%) */
         @keyframes spinAndPulse {
-            0% { transform: rotate(0deg) scale(0.9); opacity: 0.8; }
-            50% { transform: rotate(180deg) scale(1.1); opacity: 1; box-shadow: 0 0 25px var(--neon-primary); }
-            100% { transform: rotate(360deg) scale(0.9); opacity: 0.8; }
+            0% { transform: translate(-50%, -50%) rotate(0deg) scale(0.9); opacity: 0.8; }
+            50% { transform: translate(-50%, -50%) rotate(180deg) scale(1.1); opacity: 1; box-shadow: 0 0 25px var(--neon-primary); }
+            100% { transform: translate(-50%, -50%) rotate(360deg) scale(0.9); opacity: 0.8; }
         }
 
-        /* عناصر التحكم */
         .controls-section {
             background: rgba(10, 1, 18, 0.75);
             backdrop-filter: blur(5px);
@@ -204,7 +202,6 @@
             background: linear-gradient(45deg, var(--neon-primary), var(--neon-secondary));
         }
 
-        /* حالة الزر عندما يكون العداد يعمل */
         .btn-predict.disabled {
             background: #333 !important;
             color: #777 !important;
@@ -227,7 +224,6 @@
         
         .btn-link:hover { background: rgba(26, 5, 37, 0.9); border-color: var(--neon-primary); color: #fff; }
 
-        /* منطقة النتائج */
         .stats-box {
             display: flex;
             justify-content: space-between;
@@ -266,21 +262,24 @@
         .medium-prob { border-color: var(--neon-secondary); }
         .medium-prob .prob { color: var(--neon-secondary); }
 
-        /* ستايل العداد الدائري الجديد (الخط الأصفر المضيء) */
+        /* تعديل العداد الدائري لحل مشكلة التغطية على النتائج */
         .timer-container {
             position: fixed;
-            bottom: 20px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
-            width: 80px;
-            height: 80px;
+            width: 70px; /* تم تصغيره قليلاً */
+            height: 70px;
             z-index: 1000;
+            background: rgba(8, 0, 15, 0.8); /* إضافة خلفية داكنة تحته */
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
         }
 
         .timer-svg {
             transform: rotate(-90deg);
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
         }
 
         .timer-bg {
@@ -294,9 +293,9 @@
             stroke: var(--timer-color);
             stroke-width: 5;
             stroke-linecap: round;
-            stroke-dasharray: 226; /* محيط الدائرة (2 * pi * r) = 2 * 3.14 * 36 */
+            stroke-dasharray: 188.4; /* المحيط الجديد: 2 * 3.14 * 30 */
             stroke-dashoffset: 0;
-            filter: drop-shadow(0 0 10px var(--timer-color));
+            filter: drop-shadow(0 0 8px var(--timer-color));
         }
 
         .timer-text {
@@ -305,7 +304,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             color: var(--timer-color);
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
             text-shadow: 0 0 10px var(--timer-color);
         }
@@ -314,7 +313,6 @@
 </head>
 <body>
 
-    <!-- مؤثرات الخلفية -->
     <div class="animated-background"></div>
     <div class="scanning-lines"></div>
 
@@ -335,7 +333,6 @@
                 <input type="number" id="numInput" min="0" max="36" placeholder="Auto-Predict Active">
             </div>
 
-            <!-- زر البدء -->
             <button class="btn btn-predict" id="predictBtn" onclick="runAnalysis()">Initialize Algorithm</button>
             
             <a href="https://m.dubibet365.com/" target="_blank" class="btn btn-link">CONNECT TO DUBIBET SERVER</a>
@@ -353,28 +350,25 @@
         </div>
     </div>
 
-    <!-- العداد الدائري الجديد -->
     <div class="timer-container">
-        <svg class="timer-svg" viewBox="0 0 80 80">
-            <circle class="timer-bg" cx="40" cy="40" r="36"></circle>
-            <circle class="timer-progress" id="timerProgress" cx="40" cy="40" r="36"></circle>
+        <svg class="timer-svg" viewBox="0 0 70 70">
+            <circle class="timer-bg" cx="35" cy="35" r="30"></circle>
+            <circle class="timer-progress" id="timerProgress" cx="35" cy="35" r="30"></circle>
         </svg>
-        <div class="timer-text" id="timerText">0</div>
+        <div class="timer-text" id="timerText">RDY</div>
     </div>
 
     <script>
         const gridOverlay = document.getElementById('gridOverlay');
         const cells = {}; 
         
-        // متغيرات العداد
         let isTimerRunning = false;
         const totalTime = 18;
         const timerProgress = document.getElementById('timerProgress');
         const timerText = document.getElementById('timerText');
         const predictBtn = document.getElementById('predictBtn');
-        const circumference = 226; // 2 * Math.PI * 36
+        const circumference = 188.4; // 2 * Math.PI * 30
 
-        // تهيئة العداد على الصفر في البداية (جاهز)
         timerProgress.style.strokeDashoffset = circumference;
         timerText.innerText = "RDY";
 
@@ -406,13 +400,11 @@
             predictBtn.classList.add('disabled');
             let timeLeft = totalTime;
             
-            // إعادة ضبط الشكل للبداية
             timerProgress.style.transition = 'none';
             timerProgress.style.strokeDashoffset = '0';
             timerText.innerText = timeLeft;
-            timerText.style.fontSize = "24px";
+            timerText.style.fontSize = "22px";
 
-            // إضافة الأنيميشن (خط يدور ببطء لينتهي مع الوقت)
             setTimeout(() => {
                 timerProgress.style.transition = `stroke-dashoffset ${totalTime}s linear`;
                 timerProgress.style.strokeDashoffset = circumference;
@@ -427,13 +419,12 @@
                     isTimerRunning = false;
                     predictBtn.classList.remove('disabled');
                     timerText.innerText = "RDY";
-                    timerText.style.fontSize = "20px";
+                    timerText.style.fontSize = "18px";
                 }
             }, 1000);
         }
 
         function runAnalysis() {
-            // منع بدء جولة جديدة إذا كان العداد يعمل
             if (isTimerRunning) return;
 
             let inputVal = parseInt(document.getElementById('numInput').value);
@@ -442,14 +433,11 @@
                 inputVal = Math.floor(Math.random() * 37); 
             }
 
-            // مسح العلامات السابقة
             document.querySelectorAll('.target-marker').forEach(el => el.remove());
             document.getElementById('statsBox').style.display = 'none';
 
-            // تشغيل العداد فوراً
             startTimer();
             
-            // إظهار النتائج بعد ثانية تقريباً (لإعطاء شعور بالتحليل)
             setTimeout(() => {
                 const currentIndex = wheelSequence.indexOf(inputVal);
                 
