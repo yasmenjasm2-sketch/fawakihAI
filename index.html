@@ -97,18 +97,13 @@
             border-radius: 5px; 
         }
 
-        /* 
-           إصلاح وتعديل الشبكة لتطابق المسافات بدقة احترافية.
-           تمت إضافة عامود وهمي في الأخير ليمثل مساحة الـ (2to1) كي تنضبط الأرقام.
-        */
         .grid-overlay {
             position: absolute;
-            top: 17.5%;      /* تعديل المسافة العلوية */
-            left: 2.8%;      /* تعديل المسافة اليسرى */
-            width: 94.5%;    /* تعديل العرض الكلي ليغطي الجدول كاملاً */
-            height: 33.5%;   /* تعديل الارتفاع ليغطي الأرقام فقط */
+            top: 17.5%;      
+            left: 2.8%;      
+            width: 94.5%;    
+            height: 33.5%;   
             display: grid;
-            /* تقسيم دقيق: الصفر، ثم 12 رقم، ثم عامود 2to1 الوهمي */
             grid-template-columns: 1.15fr repeat(12, 1fr) 0.9fr; 
             grid-template-rows: repeat(3, 1fr);
             z-index: 5;
@@ -117,10 +112,9 @@
         .cell {
             position: relative;
             pointer-events: none;
-            display: block; /* تغيير من flex لتسهيل التوسيط المطلق */
+            display: block; 
         }
 
-        /* الرادار الدوار - تم ضبط التوسيط التام */
         .target-marker {
             position: absolute;
             top: 50%;
@@ -136,7 +130,6 @@
             z-index: 10;
         }
 
-        /* تعديل الأنيميشن ليتوافق مع التوسيط التام (-50%, -50%) */
         @keyframes spinAndPulse {
             0% { transform: translate(-50%, -50%) rotate(0deg) scale(0.9); opacity: 0.8; }
             50% { transform: translate(-50%, -50%) rotate(180deg) scale(1.1); opacity: 1; box-shadow: 0 0 25px var(--neon-primary); }
@@ -262,16 +255,15 @@
         .medium-prob { border-color: var(--neon-secondary); }
         .medium-prob .prob { color: var(--neon-secondary); }
 
-        /* تعديل العداد الدائري لحل مشكلة التغطية على النتائج */
         .timer-container {
             position: fixed;
             bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
-            width: 70px; /* تم تصغيره قليلاً */
+            width: 70px; 
             height: 70px;
             z-index: 1000;
-            background: rgba(8, 0, 15, 0.8); /* إضافة خلفية داكنة تحته */
+            background: rgba(8, 0, 15, 0.8); 
             border-radius: 50%;
             box-shadow: 0 0 15px rgba(0,0,0,0.8);
         }
@@ -293,7 +285,7 @@
             stroke: var(--timer-color);
             stroke-width: 5;
             stroke-linecap: round;
-            stroke-dasharray: 188.4; /* المحيط الجديد: 2 * 3.14 * 30 */
+            stroke-dasharray: 188.4; 
             stroke-dashoffset: 0;
             filter: drop-shadow(0 0 8px var(--timer-color));
         }
@@ -367,7 +359,7 @@
         const timerProgress = document.getElementById('timerProgress');
         const timerText = document.getElementById('timerText');
         const predictBtn = document.getElementById('predictBtn');
-        const circumference = 188.4; // 2 * Math.PI * 30
+        const circumference = 188.4; 
 
         timerProgress.style.strokeDashoffset = circumference;
         timerText.innerText = "RDY";
@@ -393,6 +385,7 @@
         }
         initGrid();
 
+        // الترتيب الفعلي لعجلة الروليت (الأوروبي)
         const wheelSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
         function startTimer() {
@@ -427,10 +420,19 @@
         function runAnalysis() {
             if (isTimerRunning) return;
 
-            let inputVal = parseInt(document.getElementById('numInput').value);
+            let inputElement = document.getElementById('numInput');
+            let rawVal = inputElement.value.trim();
 
+            // 1. الخوارزمية الذكية: التأكد من إدخال رقم لعملية الاستثناء
+            if (rawVal === "") {
+                alert("⚠️ تنبيه: يرجى إدخال الرقم الأخير الذي سقطت عليه الكرة!\n\nتحتاج الخوارزمية لمعرفة الرقم السابق لتقوم باستثناء منطقة سقوطه (الرقم والأرقام المجاورة له على عجلة الروليت) لأن نسبة عودة الكرة لنفس المنطقة الملاصقة ضعيفة جداً.");
+                return; // إيقاف العملية حتى يتم الإدخال
+            }
+
+            let inputVal = parseInt(rawVal);
             if (isNaN(inputVal) || inputVal < 0 || inputVal > 36) {
-                inputVal = Math.floor(Math.random() * 37); 
+                alert("⚠️ خطأ: يرجى إدخال رقم صحيح موجود في الروليت (بين 0 و 36).");
+                return;
             }
 
             document.querySelectorAll('.target-marker').forEach(el => el.remove());
@@ -439,16 +441,28 @@
             startTimer();
             
             setTimeout(() => {
+                // 2. نظام المنطقة المحظورة (استثناء الرقم ومحيطه في العجلة)
                 const currentIndex = wheelSequence.indexOf(inputVal);
+                let excludedNumbers = [];
                 
-                let index1 = (currentIndex + 5) % 37;
-                let index2 = (currentIndex - 4 + 37) % 37; 
+                // نقوم باستثناء الرقم نفسه + 3 أرقام عن يمينه + 3 أرقام عن يساره في العجلة الدوارة
+                for(let i = -3; i <= 3; i++) {
+                    let neighborIndex = (currentIndex + i + 37) % 37;
+                    excludedNumbers.push(wheelSequence[neighborIndex]);
+                }
 
-                let num1 = wheelSequence[index1];
-                let num2 = wheelSequence[index2];
+                // 3. فلترة الأرقام لإنشاء قائمة بالأرقام القابلة للتخمين
+                let availableNumbers = wheelSequence.filter(num => !excludedNumbers.includes(num));
 
-                let prob1 = Math.floor(Math.random() * (85 - 70 + 1)) + 70; 
-                let prob2 = Math.floor(Math.random() * ((prob1 - 10) - 50 + 1)) + 50; 
+                // 4. خلط الأرقام المتاحة بشكل عشوائي وذكي لاختيار رقمين منها
+                availableNumbers.sort(() => 0.5 - Math.random());
+
+                let num1 = availableNumbers[0];
+                let num2 = availableNumbers[1];
+
+                // توليد نسب مئوية قوية
+                let prob1 = Math.floor(Math.random() * (89 - 78 + 1)) + 78; // نسبة عالية
+                let prob2 = Math.floor(Math.random() * ((prob1 - 8) - 62 + 1)) + 62; // نسبة متوسطة
 
                 document.getElementById('statsBox').style.display = 'flex';
                 document.getElementById('res1-num').innerText = num1;
