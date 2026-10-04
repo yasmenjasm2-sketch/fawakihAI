@@ -4,43 +4,45 @@
     <meta charset="UTF-8">
     <title>Roulette Overlay Auto-Loader</title>
     <style>
-        /* إزالة الحواف وجعل الصفحة تملأ الشاشة */
         body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden; 
+            margin: 0; padding: 0; height: 100%;
             font-family: Arial, sans-serif;
             background-color: #000;
+            color: white;
         }
 
-        /* إطار الكازينو ليغطي الشاشة بالكامل في الخلفية */
-        #casino-frame {
-            width: 100vw;
-            height: 100vh;
+        /* زر لفتح الموقع (بديل الـ iframe المحجوب) */
+        #open-site-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 14px 22px;
+            background: #e50000;
+            color: white;
             border: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10000;
         }
+        #open-site-btn:hover { background: #ff1a1a; }
 
-        /* تصميم الشاشة المنبثقة (Overlay) لتكون عائمة */
+        /* نافذة المحلل العائمة */
         #analyzer-overlay {
             position: fixed;
             top: 20px;
             right: 20px;
-            width: 300px; 
-            background-color: rgba(34, 34, 34, 0.95); /* شفافية خفيفة لرؤية ما خلفها */
+            width: 300px;
+            background-color: rgba(34, 34, 34, 0.95);
             color: white;
             padding: 15px;
             border-radius: 10px;
-            z-index: 9999; /* لضمان بقائها فوق الموقع دائماً */
+            z-index: 9999;
             box-shadow: 0px 4px 15px rgba(0,0,0,0.7);
             border: 1px solid #555;
-            cursor: grab; /* مؤشر السحب */
+            cursor: grab;
         }
-        
         #analyzer-overlay:active { cursor: grabbing; }
 
         #analyzer-overlay h2 {
@@ -58,7 +60,6 @@
             border-radius: 5px;
             font-size: 1em;
         }
-
         .controls button {
             background-color: #e50000;
             color: white;
@@ -67,8 +68,7 @@
             cursor: pointer;
             transition: 0.2s;
         }
-
-        .controls button:hover { background-color: #ff1a1a; }
+        .controls button:hover { background: #ff1a1a; }
 
         #result {
             margin-top: 15px;
@@ -80,7 +80,6 @@
             font-weight: bold;
         }
 
-        /* زر الإغلاق/التصغير */
         #toggle-btn {
             position: absolute;
             top: 8px;
@@ -100,14 +99,12 @@
 </head>
 <body>
 
-    <!-- الموقع الأصلي يعمل في الخلفية -->
-    <iframe id="casino-frame" src="https://m.dubibet365.com/"></iframe>
+    <button id="open-site-btn" onclick="openCasino()">🎮 فتح الكازينو في نافذة عائمة</button>
 
-    <!-- نافذة المحلل العائمة -->
     <div id="analyzer-overlay" class="controls">
         <button id="toggle-btn" onclick="toggleAnalyzer()">-</button>
         <h2>محلل الروليت الذكي</h2>
-        
+
         <div id="analyzer-content">
             <label style="font-size: 0.9em; display:block; margin-bottom: 5px;">أدخل آخر رقم ظهر:</label>
             <input type="number" id="lastNumber" min="0" max="36" placeholder="مثال: 34">
@@ -118,9 +115,31 @@
     </div>
 
     <script>
+        const CASINO_URL = "https://m.dubibet365.com/";
+        let casinoWindow = null;
+
+        // فتح الموقع في نافذة صغيرة بدلاً من iframe المحجوب
+        function openCasino() {
+            if (casinoWindow && !casinoWindow.closed) {
+                casinoWindow.focus();
+                return;
+            }
+            casinoWindow = window.open(
+                CASINO_URL,
+                "casinoWindow",
+                "width=1000,height=700,left=100,top=50,menubar=no,toolbar=no,location=no"
+            );
+            if (!casinoWindow) {
+                alert("المتصفح منع فتح النافذة (Popup Blocker). اسمح بالنوافذ المنبثقة لهذا الموقع.");
+            }
+        }
+
+        // محاولة فتح تلقائية عند تحميل الصفحة (قد يحجبها المتصفح، لذلك يبقى الزر)
+        window.addEventListener('load', () => setTimeout(openCasino, 500));
+
         // --- 1. منطق الخوارزمية ---
         let history = [];
-        
+
         function addNumber() {
             const num = parseInt(document.getElementById('lastNumber').value);
             if (!isNaN(num) && num >= 0 && num <= 36) {
@@ -132,12 +151,13 @@
         }
 
         function updateStatus() {
+            const res = document.getElementById('result');
             if (history.length < 5) {
-                document.getElementById('result').innerText = `بانتظار البيانات... (${history.length}/5)`;
-                document.getElementById('result').style.color = "white";
+                res.innerText = `بانتظار البيانات... (${history.length}/5)`;
+                res.style.color = "white";
             } else {
-                document.getElementById('result').innerText = "البيانات كافية.. جاهز للتخمين!";
-                document.getElementById('result').style.color = "#00ff00";
+                res.innerText = "البيانات كافية.. جاهز للتخمين!";
+                res.style.color = "#00ff00";
             }
         }
 
@@ -146,61 +166,41 @@
                 alert("يرجى إدخال 5 أرقام على الأقل حتى تتمكن الخوارزمية من العمل.");
                 return;
             }
-            
             let allNumbers = Array.from({length: 37}, (_, i) => i);
             let recentNumbers = history.slice(-5);
             let availableNumbers = allNumbers.filter(n => !recentNumbers.includes(n));
-            
-            let randomIndex = Math.floor(Math.random() * availableNumbers.length);
-            let prediction = availableNumbers[randomIndex];
-            
-            document.getElementById('result').innerHTML = "<span style='color:#ffeb3b; font-size: 1.3em;'> التوقع: " + prediction + "</span>";
+            let prediction = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+            document.getElementById('result').innerHTML =
+                "<span style='color:#ffeb3b; font-size: 1.3em;'> التوقع: " + prediction + "</span>";
         }
 
-        // --- 2. منطق إخفاء/إظهار النافذة ---
+        // --- 2. إخفاء/إظهار ---
         let contentVisible = true;
         function toggleAnalyzer() {
             const content = document.getElementById('analyzer-content');
             const btn = document.getElementById('toggle-btn');
-            if (contentVisible) {
-                content.style.display = 'none';
-                btn.innerText = '+';
-            } else {
-                content.style.display = 'block';
-                btn.innerText = '-';
-            }
             contentVisible = !contentVisible;
+            content.style.display = contentVisible ? 'block' : 'none';
+            btn.innerText = contentVisible ? '-' : '+';
         }
 
-        // --- 3. منطق السحب والإفلات (Drag functionality) ---
+        // --- 3. السحب والإفلات ---
         const overlay = document.getElementById('analyzer-overlay');
         let isDragging = false, startX, startY, initialX, initialY;
 
         overlay.addEventListener('mousedown', function(e) {
-            // منع السحب إذا كان المستخدم يضغط على حقل إدخال أو زر
-            if(['INPUT', 'BUTTON', 'LABEL'].includes(e.target.tagName)) return;
-            
+            if (['INPUT','BUTTON','LABEL'].includes(e.target.tagName)) return;
             isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            initialX = overlay.offsetLeft;
-            initialY = overlay.offsetTop;
-            // فك ارتباط العنصر باليمين ليتمكن من الحركة بحرية
-            overlay.style.right = 'auto'; 
+            startX = e.clientX; startY = e.clientY;
+            initialX = overlay.offsetLeft; initialY = overlay.offsetTop;
+            overlay.style.right = 'auto';
         });
-
         document.addEventListener('mousemove', function(e) {
-            if (isDragging) {
-                let dx = e.clientX - startX;
-                let dy = e.clientY - startY;
-                overlay.style.left = (initialX + dx) + 'px';
-                overlay.style.top = (initialY + dy) + 'px';
-            }
+            if (!isDragging) return;
+            overlay.style.left = (initialX + (e.clientX - startX)) + 'px';
+            overlay.style.top  = (initialY + (e.clientY - startY)) + 'px';
         });
-
-        document.addEventListener('mouseup', function() {
-            isDragging = false;
-        });
+        document.addEventListener('mouseup', () => isDragging = false);
     </script>
 </body>
 </html>
