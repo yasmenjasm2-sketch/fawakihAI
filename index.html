@@ -6,13 +6,11 @@
     <title>Dubibet Pro Analyzer - AI Core</title>
     <style>
         :root {
-            /* السمة البنفسجية الاحترافية */
             --bg-color: #08000f;
             --neon-primary: #a200ff;
             --neon-secondary: #ff00ea;
-            --panel-bg: rgba(17, 5, 24, 0.2); /* تم التعديل لتكون شبه شفافة */
+            --timer-color: #ffd700; /* لون العداد الأصفر المضيء */
             --text-glow: 0 0 10px rgba(162, 0, 255, 0.5);
-            --border-glow: 0 0 15px rgba(162, 0, 255, 0.3);
             --danger-color: #ff3366;
         }
 
@@ -29,10 +27,10 @@
             overflow-x: hidden;
             overflow-y: auto;
             position: relative;
-            padding-bottom: 110px; /* لضمان عدم تغطية التيرمينال للمحتوى */
+            padding-bottom: 120px; /* مساحة للعداد بالأسفل */
         }
 
-        /* تأثير الخطوط المتحركة في الخلفية */
+        /* إصلاح تأثير الخطوط المتحركة في الخلفية لتظهر بوضوح */
         .animated-background {
             position: fixed;
             top: 0;
@@ -40,8 +38,8 @@
             width: 100%;
             height: 100%;
             background: 
-                linear-gradient(rgba(162, 0, 255, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(162, 0, 255, 0.08) 1px, transparent 1px);
+                linear-gradient(rgba(162, 0, 255, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(162, 0, 255, 0.1) 1px, transparent 1px);
             background-size: 30px 30px;
             z-index: -2;
         }
@@ -52,8 +50,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, transparent, rgba(162, 0, 255, 0.25), transparent);
-            animation: scan 4s linear infinite;
+            background: linear-gradient(to bottom, transparent, rgba(162, 0, 255, 0.3), transparent);
+            animation: scan 3s linear infinite;
             z-index: -1;
             pointer-events: none;
         }
@@ -70,9 +68,7 @@
             margin-top: 20px;
             padding: 20px;
             box-sizing: border-box;
-            background: transparent; /* إزالة خلفية البطاقة */
-            border: none; /* إزالة إطار البطاقة */
-            box-shadow: none; /* إزالة ظل البطاقة */
+            background: transparent;
             z-index: 10;
         }
 
@@ -88,30 +84,35 @@
             text-transform: uppercase;
         }
 
-        /* لوحة الروليت */
+        /* لوحة الروليت (تم إزالة البطاقة والإطارات) */
         .board-wrapper {
             position: relative;
             width: 100%;
             margin-bottom: 25px;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 0 25px rgba(162, 0, 255, 0.2);
-            border: 1px solid rgba(74, 21, 110, 0.6);
+            border: none;
+            box-shadow: none;
+            background: transparent;
         }
 
         .board-wrapper img {
             width: 100%;
             display: block;
+            border-radius: 5px; /* حواف ناعمة للصورة فقط إذا لزم الأمر */
         }
 
+        /* 
+           تعديل موقع الشبكة لتطابق الأرقام. 
+           إذا كانت العلامات غير مضبوطة تماماً على صورتك، 
+           قم بتغيير النسب المئوية (top, left, width, height) قليلاً.
+        */
         .grid-overlay {
             position: absolute;
-            top: 17%; /* تم ضبط النسبة لتتطابق مع الصورة */
-            left: 6%;
-            width: 88.5%;
-            height: 35.5%;
+            top: 15.5%; 
+            left: 5%;
+            width: 90%;
+            height: 38%;
             display: grid;
-            grid-template-columns: 1.15fr repeat(12, 1fr) 1fr;
+            grid-template-columns: 1.15fr repeat(12, 1fr); /* تم ضبط الأعمدة */
             grid-template-rows: repeat(3, 1fr);
             z-index: 5;
         }
@@ -124,11 +125,10 @@
             justify-content: center;
         }
 
-        /* العلامة الدائرية المتحركة الاحترافية (متمركزة بالضبط) */
         .target-marker {
             position: absolute;
-            width: 75%; /* نسبة مئوية لضمان التناسق داخل المربع */
-            aspect-ratio: 1 / 1; /* لجعلها دائرة مثالية دائماً */
+            width: 75%;
+            aspect-ratio: 1 / 1;
             border-radius: 50%;
             border: 2px solid transparent;
             border-top: 3px solid var(--neon-primary);
@@ -146,7 +146,7 @@
 
         /* عناصر التحكم */
         .controls-section {
-            background: rgba(10, 1, 18, 0.7); /* خلفية شبه شفافة لتوضيح الخطوط */
+            background: rgba(10, 1, 18, 0.75);
             backdrop-filter: blur(5px);
             padding: 15px;
             border-radius: 10px;
@@ -204,6 +204,15 @@
             background: linear-gradient(45deg, var(--neon-primary), var(--neon-secondary));
         }
 
+        /* حالة الزر عندما يكون العداد يعمل */
+        .btn-predict.disabled {
+            background: #333 !important;
+            color: #777 !important;
+            box-shadow: none !important;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
         .btn-link {
             background: rgba(17, 17, 17, 0.8);
             color: #aaa;
@@ -215,6 +224,7 @@
             margin-top: 15px;
             font-size: 0.9em;
         }
+        
         .btn-link:hover { background: rgba(26, 5, 37, 0.9); border-color: var(--neon-primary); color: #fff; }
 
         /* منطقة النتائج */
@@ -256,38 +266,49 @@
         .medium-prob { border-color: var(--neon-secondary); }
         .medium-prob .prob { color: var(--neon-secondary); }
 
-        /* شاشة الاتصال الوهمية (Terminal) ثابتة بالأسفل بشكل تام */
-        .terminal-container {
+        /* ستايل العداد الدائري الجديد (الخط الأصفر المضيء) */
+        .timer-container {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(5, 0, 10, 0.98);
-            border-top: 1px solid var(--neon-primary);
-            padding: 10px 20px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.85em;
-            color: var(--neon-primary);
-            box-sizing: border-box;
-            z-index: 9999;
-            height: 95px;
-            overflow-y: hidden;
-            box-shadow: 0 -5px 25px rgba(162, 0, 255, 0.2);
-            backdrop-filter: blur(5px);
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            z-index: 1000;
         }
 
-        .terminal-line {
-            margin: 3px 0;
-            opacity: 0;
-            animation: fadeIn 0.2s forwards;
-            line-height: 1.4;
+        .timer-svg {
+            transform: rotate(-90deg);
+            width: 80px;
+            height: 80px;
         }
 
-        .sys-err { color: var(--danger-color); }
-        .sys-warn { color: #ff00ea; }
-        .sys-info { color: #00e5ff; }
+        .timer-bg {
+            fill: none;
+            stroke: rgba(255, 215, 0, 0.15);
+            stroke-width: 5;
+        }
 
-        @keyframes fadeIn { to { opacity: 1; } }
+        .timer-progress {
+            fill: none;
+            stroke: var(--timer-color);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 226; /* محيط الدائرة (2 * pi * r) = 2 * 3.14 * 36 */
+            stroke-dashoffset: 0;
+            filter: drop-shadow(0 0 10px var(--timer-color));
+        }
+
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--timer-color);
+            font-size: 22px;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--timer-color);
+        }
 
     </style>
 </head>
@@ -301,7 +322,6 @@
         <h2>Advanced AI Core</h2>
         
         <div class="board-wrapper">
-            <!-- استخدام اسم الصورة المطلوبة -->
             <img src="ses.jpg" alt="Roulette Board">
             
             <div class="grid-overlay" id="gridOverlay">
@@ -315,7 +335,8 @@
                 <input type="number" id="numInput" min="0" max="36" placeholder="Auto-Predict Active">
             </div>
 
-            <button class="btn btn-predict" onclick="runAnalysis()">Initialize Algorithm</button>
+            <!-- زر البدء -->
+            <button class="btn btn-predict" id="predictBtn" onclick="runAnalysis()">Initialize Algorithm</button>
             
             <a href="https://m.dubibet365.com/" target="_blank" class="btn btn-link">CONNECT TO DUBIBET SERVER</a>
 
@@ -332,12 +353,30 @@
         </div>
     </div>
 
-    <!-- Terminal -->
-    <div class="terminal-container" id="terminal"></div>
+    <!-- العداد الدائري الجديد -->
+    <div class="timer-container">
+        <svg class="timer-svg" viewBox="0 0 80 80">
+            <circle class="timer-bg" cx="40" cy="40" r="36"></circle>
+            <circle class="timer-progress" id="timerProgress" cx="40" cy="40" r="36"></circle>
+        </svg>
+        <div class="timer-text" id="timerText">0</div>
+    </div>
 
     <script>
         const gridOverlay = document.getElementById('gridOverlay');
         const cells = {}; 
+        
+        // متغيرات العداد
+        let isTimerRunning = false;
+        const totalTime = 18;
+        const timerProgress = document.getElementById('timerProgress');
+        const timerText = document.getElementById('timerText');
+        const predictBtn = document.getElementById('predictBtn');
+        const circumference = 226; // 2 * Math.PI * 36
+
+        // تهيئة العداد على الصفر في البداية (جاهز)
+        timerProgress.style.strokeDashoffset = circumference;
+        timerText.innerText = "RDY";
 
         function initGrid() {
             for (let i = 0; i <= 36; i++) {
@@ -362,32 +401,55 @@
 
         const wheelSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
-        function runAnalysis() {
-            let inputVal = parseInt(document.getElementById('numInput').value);
-            let isAuto = false;
+        function startTimer() {
+            isTimerRunning = true;
+            predictBtn.classList.add('disabled');
+            let timeLeft = totalTime;
+            
+            // إعادة ضبط الشكل للبداية
+            timerProgress.style.transition = 'none';
+            timerProgress.style.strokeDashoffset = '0';
+            timerText.innerText = timeLeft;
+            timerText.style.fontSize = "24px";
 
-            // التعديل السري: إذا لم يقم المستخدم بإدخال رقم، قم بتوليد رقم عشوائي سرياً ليعطي نتائج
+            // إضافة الأنيميشن (خط يدور ببطء لينتهي مع الوقت)
+            setTimeout(() => {
+                timerProgress.style.transition = `stroke-dashoffset ${totalTime}s linear`;
+                timerProgress.style.strokeDashoffset = circumference;
+            }, 50);
+
+            const countdown = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    timerText.innerText = timeLeft;
+                } else {
+                    clearInterval(countdown);
+                    isTimerRunning = false;
+                    predictBtn.classList.remove('disabled');
+                    timerText.innerText = "RDY";
+                    timerText.style.fontSize = "20px";
+                }
+            }, 1000);
+        }
+
+        function runAnalysis() {
+            // منع بدء جولة جديدة إذا كان العداد يعمل
+            if (isTimerRunning) return;
+
+            let inputVal = parseInt(document.getElementById('numInput').value);
+
             if (isNaN(inputVal) || inputVal < 0 || inputVal > 36) {
-                inputVal = Math.floor(Math.random() * 37); // اختيار رقم عشوائي كبذرة من 0 إلى 36
-                isAuto = true;
+                inputVal = Math.floor(Math.random() * 37); 
             }
 
+            // مسح العلامات السابقة
             document.querySelectorAll('.target-marker').forEach(el => el.remove());
             document.getElementById('statsBox').style.display = 'none';
 
-            // محاكاة إرسال الرقم للتعلم العميق في الخلفية (سواء كان مدخلاً يدوياً أو آلياً)
-            let logMsg = isAuto ? '[tx] Auto-generating seed from neural noise...' : `[tx] Encrypting input seed [${inputVal}]...`;
-            logTerminal(logMsg, 'sys-info');
+            // تشغيل العداد فوراً
+            startTimer();
             
-            setTimeout(() => {
-                let transmitMsg = isAuto ? '[net] Transmitting quantum seed to Neural Node...' : `[net] Transmitting seed [${inputVal}] to Neural Node...`;
-                logTerminal(transmitMsg, 'sys-warn');
-            }, 400);
-
-            setTimeout(() => {
-                logTerminal(`[rx] Pattern recognized. Mapping wheel physics...`, 'sys-info');
-            }, 1000);
-
+            // إظهار النتائج بعد ثانية تقريباً (لإعطاء شعور بالتحليل)
             setTimeout(() => {
                 const currentIndex = wheelSequence.indexOf(inputVal);
                 
@@ -408,10 +470,7 @@
 
                 drawMarker(num1);
                 drawMarker(num2);
-
-                logTerminal(`[ai] Targets locked: ${num1} (${prob1}%), ${num2} (${prob2}%)`, 'sys-warn');
-
-            }, 1800);
+            }, 1000);
         }
 
         function drawMarker(number) {
@@ -422,38 +481,6 @@
                 targetCell.appendChild(marker);
             }
         }
-
-        const terminal = document.getElementById('terminal');
-        const bootSequence = [
-            { text: "[sys] Initializing Neural Network...", delay: 200 },
-            { text: "[auth] Establishing secure SSL tunnel...", delay: 800 },
-            { text: "[db] Loading historical spin data...", delay: 1500, class: "sys-warn" },
-            { text: "[+] System Ready. Awaiting trigger...", delay: 2200, class: "sys-info" }
-        ];
-
-        function logTerminal(msg, className = '') {
-            const line = document.createElement('div');
-            line.className = 'terminal-line ' + className;
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: "numeric", minute: "numeric", second: "numeric" });
-            line.innerHTML = `<span style="color:#666">[${time}]</span> > ${msg}`;
-            terminal.appendChild(line);
-            
-            if(terminal.children.length > 4) terminal.removeChild(terminal.firstChild);
-        }
-
-        window.onload = () => {
-            bootSequence.forEach(step => {
-                setTimeout(() => logTerminal(step.text, step.class), step.delay);
-            });
-
-            setTimeout(() => {
-                setInterval(() => {
-                    if(Math.random() > 0.5) {
-                        logTerminal(`[ping] Server heartbeat: ${Math.floor(Math.random() * 20 + 15)}ms`);
-                    }
-                }, 6000);
-            }, 3000);
-        };
     </script>
 </body>
 </html>
