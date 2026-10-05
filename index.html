@@ -249,7 +249,7 @@
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
-            gap: 8px; /* تقليل المسافة قليلاً لتتسع 3 مربعات */
+            gap: 8px;
         }
 
         .stat-item {
@@ -345,7 +345,7 @@
     <div class="scanning-lines"></div>
 
     <div class="main-container">
-        <h2>Advanced AI Core</h2>
+        <h2>Roulette Radar </h2>
         
         <div class="board-wrapper">
             <img src="ses.jpg" alt="Roulette Board">
@@ -365,7 +365,6 @@
             
             <a href="https://m.dubibet365.com/" target="_blank" class="btn btn-link">CONNECT TO DUBIBET SERVER</a>
 
-            <!-- تعديل ليحتوي على 3 خانات -->
             <div class="stats-box" id="statsBox" style="display: none;">
                 <div class="stat-item high-prob">
                     <div class="num" id="res1-num">--</div>
@@ -403,7 +402,7 @@
         const circumference = 188.4; 
 
         // قائمة الأرقام المستثناة لمدة 3 جولات
-        let excludedNumbers = [];
+        let excludedNumbersHistory = [];
 
         timerProgress.style.strokeDashoffset = circumference;
         timerText.innerText = "RDY";
@@ -429,6 +428,7 @@
         }
         initGrid();
 
+        // تسلسل عجلة الروليت الحقيقية
         const wheelSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
         function startTimer() {
@@ -460,19 +460,23 @@
             }, 1000);
         }
 
-        // تحديث جولات الاستثناء
+        // تحديث جولات الاستثناء التاريخية
         function updateExclusions() {
-            for(let i = excludedNumbers.length - 1; i >= 0; i--) {
-                excludedNumbers[i].roundsLeft--;
-                if(excludedNumbers[i].roundsLeft <= 0) {
-                    excludedNumbers.splice(i, 1); // إزالة الرقم بعد 3 جولات
+            for(let i = excludedNumbersHistory.length - 1; i >= 0; i--) {
+                excludedNumbersHistory[i].roundsLeft--;
+                if(excludedNumbersHistory[i].roundsLeft <= 0) {
+                    excludedNumbersHistory.splice(i, 1); 
                 }
             }
         }
 
-        // التحقق مما إذا كان الرقم مستثنى
-        function isExcluded(num) {
-            return excludedNumbers.some(item => item.num === num);
+        // التحقق مما إذا كان الرقم مستثنى (من التاريخ أو من الجولة الحالية)
+        function isExcluded(num, currentExclusions) {
+            // هل هو في قائمة الـ 5 أرقام المستبعدة حالياً؟
+            if (currentExclusions.includes(num)) return true;
+            
+            // هل هو في تاريخ الأرقام المستبعدة لـ 3 جولات؟
+            return excludedNumbersHistory.some(item => item.num === num);
         }
 
         function runAnalysis() {
@@ -481,6 +485,9 @@
             const inputStr = document.getElementById('numInput').value;
             let inputVal = parseInt(inputStr);
             let hasValidInput = true;
+            
+            // قائمة الأرقام الـ 5 المستبعدة في هذه الجولة (الرقم نفسه + 2 يمين + 2 يسار)
+            let currentExclusions = [];
 
             // تحديث عداد الجولات للأرقام المستثناة السابقة
             updateExclusions();
@@ -493,15 +500,33 @@
                 warningMsg.classList.add('show');
                 setTimeout(() => {
                     warningMsg.classList.remove('show');
-                }, 4000); // إخفاء بعد 4 ثواني
+                }, 4000);
             } else {
-                // إذا أدخل رقم، نضيفه إلى قائمة الاستثناء لـ 3 جولات قادمة
-                let existing = excludedNumbers.find(x => x.num === inputVal);
+                // إذا أدخل رقم، نضيفه إلى قائمة الاستثناء التاريخية لـ 3 جولات
+                let existing = excludedNumbersHistory.find(x => x.num === inputVal);
                 if (existing) {
                     existing.roundsLeft = 3;
                 } else {
-                    excludedNumbers.push({ num: inputVal, roundsLeft: 3 });
+                    excludedNumbersHistory.push({ num: inputVal, roundsLeft: 3 });
                 }
+
+                // حساب الأرقام الـ 5 المجاورة له (الرقم نفسه + 2 عن يمينه + 2 عن يساره) واستبعادها
+                const currentIndex = wheelSequence.indexOf(inputVal);
+                
+                let idxLeft2 = (currentIndex - 2 + 37) % 37;
+                let idxLeft1 = (currentIndex - 1 + 37) % 37;
+                let idxSelf  = currentIndex;
+                let idxRight1= (currentIndex + 1) % 37;
+                let idxRight2= (currentIndex + 2) % 37;
+
+                currentExclusions.push(wheelSequence[idxLeft2]);
+                currentExclusions.push(wheelSequence[idxLeft1]);
+                currentExclusions.push(wheelSequence[idxSelf]);
+                currentExclusions.push(wheelSequence[idxRight1]);
+                currentExclusions.push(wheelSequence[idxRight2]);
+                
+                // يمكنك طباعة الأرقام المستبعدة في الكونسول للتأكد من عملها
+                console.log("الرقم المدخل:", inputVal, " | الأرقام الـ 5 المستبعدة جواره:", currentExclusions);
             }
 
             document.querySelectorAll('.target-marker').forEach(el => el.remove());
@@ -513,14 +538,16 @@
                 let predictions = [];
 
                 if (hasValidInput) {
-                    // تخمين ذكي بناءً على الخوارزمية (الأرقام المجاورة في العجلة)
+                    // التخمين من باقي أجزاء العجلة بعيداً عن المنطقة المستبعدة
                     const currentIndex = wheelSequence.indexOf(inputVal);
-                    // محاولة جلب أرقام بنطاقات مدروسة مع التأكد أنها غير مستثناة
-                    let offsets = [5, -4, 9, -12, 15]; 
+                    // مسافات أبعد في العجلة (تتجاوز الـ 2 يمين و 2 يسار)
+                    let offsets = [8, -7, 12, -14, 18, -10, 15]; 
                     for(let i=0; i<offsets.length; i++) {
                         let idx = (currentIndex + offsets[i] + 37) % 37;
                         let cand = wheelSequence[idx];
-                        if(!isExcluded(cand) && !predictions.includes(cand)) {
+                        
+                        // نتحقق أن الرقم المرشح ليس مستبعداً (لا من الـ 5 أرقام المجاورة، ولا من الجولات السابقة)
+                        if(!isExcluded(cand, currentExclusions) && !predictions.includes(cand)) {
                             predictions.push(cand);
                         }
                         if(predictions.length === 3) break;
@@ -530,15 +557,15 @@
                 // إكمال التخمين العشوائي الذكي (إذا لم يدخل رقم، أو إذا لم تكتمل الـ 3 أرقام)
                 while (predictions.length < 3) {
                     let randNum = Math.floor(Math.random() * 37);
-                    if (!isExcluded(randNum) && !predictions.includes(randNum)) {
+                    if (!isExcluded(randNum, currentExclusions) && !predictions.includes(randNum)) {
                         predictions.push(randNum);
                     }
                 }
 
                 // تحديد نسب النجاح للثلاث أرقام
-                let prob1 = Math.floor(Math.random() * (95 - 82 + 1)) + 82; // عالية
-                let prob2 = Math.floor(Math.random() * (80 - 65 + 1)) + 65; // متوسطة
-                let prob3 = Math.floor(Math.random() * (62 - 45 + 1)) + 45; // منخفضة
+                let prob1 = Math.floor(Math.random() * (95 - 82 + 1)) + 82; 
+                let prob2 = Math.floor(Math.random() * (80 - 65 + 1)) + 65; 
+                let prob3 = Math.floor(Math.random() * (62 - 45 + 1)) + 45; 
 
                 document.getElementById('statsBox').style.display = 'flex';
                 
