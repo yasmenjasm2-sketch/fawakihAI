@@ -9,7 +9,8 @@
             --bg-color: #08000f;
             --neon-primary: #a200ff;
             --neon-secondary: #ff00ea;
-            --neon-tertiary: #00eaff; /* لون للخانة الثالثة */
+            --neon-tertiary: #00eaff; 
+            --neon-quaternary: #00ff88; /* لون الخانة الرابعة العشوائية */
             --timer-color: #ffd700; 
             --text-glow: 0 0 10px rgba(162, 0, 255, 0.5);
             --danger-color: #ff3366;
@@ -28,7 +29,7 @@
             overflow-x: hidden;
             overflow-y: auto;
             position: relative;
-            padding-bottom: 100px; 
+            padding-bottom: 120px; 
         }
 
         /* رسالة التحذير المنزلقة */
@@ -249,7 +250,7 @@
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
-            gap: 8px;
+            gap: 5px;
         }
 
         .stat-item {
@@ -257,14 +258,14 @@
             background: rgba(5, 0, 10, 0.8);
             border: 1px solid #2a0845;
             border-radius: 8px;
-            padding: 10px;
+            padding: 8px 5px;
             text-align: center;
             position: relative;
             overflow: hidden;
         }
         
         .stat-item .num {
-            font-size: 2em;
+            font-size: 1.8em;
             font-weight: bold;
             color: #fff;
             margin-bottom: 5px;
@@ -272,9 +273,9 @@
         }
         
         .stat-item .prob {
-            font-size: 0.75em;
+            font-size: 0.7em;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         .high-prob { border-color: var(--neon-primary); box-shadow: 0 0 15px rgba(162, 0, 255, 0.15); }
@@ -285,6 +286,32 @@
 
         .low-prob { border-color: var(--neon-tertiary); box-shadow: 0 0 15px rgba(0, 234, 255, 0.15); }
         .low-prob .prob { color: var(--neon-tertiary); }
+
+        .random-prob { border-color: var(--neon-quaternary); box-shadow: 0 0 15px rgba(0, 255, 136, 0.15); }
+        .random-prob .prob { color: var(--neon-quaternary); }
+
+        /* تنسيق الصورة الدوارة بالأسفل */
+        .rotating-logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 25px;
+        }
+
+        .rotating-logo {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--neon-primary);
+            box-shadow: 0 0 20px rgba(162, 0, 255, 0.4);
+            animation: rotateImage 10s linear infinite;
+        }
+
+        @keyframes rotateImage {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
 
         .timer-container {
             position: fixed;
@@ -378,7 +405,18 @@
                     <div class="num" id="res3-num">--</div>
                     <div class="prob">Low: <span id="res3-prob">--%</span></div>
                 </div>
+                <!-- الخانة الرابعة العشوائية الجديدة -->
+                <div class="stat-item random-prob">
+                    <div class="num" id="res4-num">--</div>
+                    <div class="prob">RND: <span id="res4-prob">--%</span></div>
+                </div>
             </div>
+            
+            <!-- الصورة الدوارة الجديدة -->
+            <div class="rotating-logo-container">
+                <img src="gfa.jpg" alt="AI Core Radar" class="rotating-logo">
+            </div>
+
         </div>
     </div>
 
@@ -524,9 +562,6 @@
                 currentExclusions.push(wheelSequence[idxSelf]);
                 currentExclusions.push(wheelSequence[idxRight1]);
                 currentExclusions.push(wheelSequence[idxRight2]);
-                
-                // يمكنك طباعة الأرقام المستبعدة في الكونسول للتأكد من عملها
-                console.log("الرقم المدخل:", inputVal, " | الأرقام الـ 5 المستبعدة جواره:", currentExclusions);
             }
 
             document.querySelectorAll('.target-marker').forEach(el => el.remove());
@@ -562,10 +597,14 @@
                     }
                 }
 
-                // تحديد نسب النجاح للثلاث أرقام
+                // الرقم الرابع العشوائي تماماً (لا يلتزم بقواعد الاستبعاد)
+                let randomPrediction4 = Math.floor(Math.random() * 37);
+
+                // تحديد نسب النجاح
                 let prob1 = Math.floor(Math.random() * (95 - 82 + 1)) + 82; 
                 let prob2 = Math.floor(Math.random() * (80 - 65 + 1)) + 65; 
                 let prob3 = Math.floor(Math.random() * (62 - 45 + 1)) + 45; 
+                let prob4 = Math.floor(Math.random() * (99 - 15 + 1)) + 15; // نسبة عشوائية للرقم الرابع
 
                 document.getElementById('statsBox').style.display = 'flex';
                 
@@ -581,10 +620,15 @@
                 document.getElementById('res3-num').innerText = predictions[2];
                 document.getElementById('res3-prob').innerText = prob3 + '%';
 
+                // الخانة الرابعة (العشوائية)
+                document.getElementById('res4-num').innerText = randomPrediction4;
+                document.getElementById('res4-prob').innerText = prob4 + '%';
+
                 // رسم الرادارات على الخريطة
                 drawMarker(predictions[0]);
                 drawMarker(predictions[1]);
                 drawMarker(predictions[2]);
+                drawMarker(randomPrediction4); // رسم رادار الرقم الرابع العشوائي
 
             }, 1000);
         }
