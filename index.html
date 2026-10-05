@@ -32,6 +32,121 @@
             padding-bottom: 120px; 
         }
 
+        /* شاشة تسجيل الدخول */
+        #loginOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-color);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            direction: rtl;
+        }
+
+        .login-card {
+            background: rgba(10, 1, 18, 0.95);
+            border: 1px solid var(--neon-primary);
+            box-shadow: 0 0 30px rgba(162, 0, 255, 0.4), inset 0 0 15px rgba(162, 0, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px 25px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .login-card h3 {
+            color: var(--neon-primary);
+            text-shadow: var(--text-glow);
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            letter-spacing: 1.5px;
+            border-bottom: 1px solid rgba(162, 0, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .login-card p {
+            color: #ccc;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--neon-secondary);
+            color: var(--neon-tertiary);
+            font-size: 1.4em;
+            border-radius: 8px;
+            text-align: center;
+            box-sizing: border-box;
+            outline: none;
+            letter-spacing: 4px;
+            margin-bottom: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 13px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-request {
+            background: linear-gradient(45deg, #2a0845, var(--neon-primary));
+            color: white;
+            box-shadow: 0 0 10px rgba(162, 0, 255, 0.3);
+        }
+
+        .btn-request:hover {
+            background: linear-gradient(45deg, var(--neon-primary), var(--neon-secondary));
+        }
+
+        .btn-verify {
+            background: linear-gradient(45deg, #0088cc, var(--neon-tertiary));
+            color: #000;
+            box-shadow: 0 0 10px rgba(0, 234, 255, 0.3);
+        }
+
+        .btn-verify:hover {
+            background: linear-gradient(45deg, var(--neon-tertiary), var(--neon-quaternary));
+        }
+
+        .login-status {
+            margin-top: 15px;
+            font-size: 0.85em;
+            min-height: 20px;
+            font-weight: bold;
+        }
+
+        .status-success { color: var(--neon-quaternary); }
+        .status-error { color: var(--danger-color); }
+        .status-info { color: var(--neon-tertiary); }
+
+        .otp-timer {
+            color: var(--timer-color);
+            font-size: 0.9em;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
         /* رسالة التحذير المنزلقة */
         .warning-alert {
             position: fixed;
@@ -363,6 +478,25 @@
 </head>
 <body>
 
+    <!-- شاشة تسجيل الدخول وتأكيد الهوية -->
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h3>تسجيل الدخول والتحقق</h3>
+            <p>يرجى طلب كود التحقق لإكمال عملية الدخول إلى النظام.</p>
+            
+            <button class="login-btn btn-request" id="requestCodeBtn" onclick="requestTelegramCode()">طلب كود التحقق 🔐</button>
+            
+            <div class="otp-timer" id="otpTimerText" style="display: none;">الكود صالـح لمدة: <span id="otpCountdown">60</span> ثانية</div>
+            
+            <div style="margin-top: 15px;">
+                <input type="text" id="otpInput" class="login-input" placeholder="أدخل كود التحقق" maxlength="6">
+                <button class="login-btn btn-verify" onclick="verifyTelegramCode()">تأكيد الدخول 🚀</button>
+            </div>
+            
+            <div id="loginStatus" class="login-status"></div>
+        </div>
+    </div>
+
     <!-- رسالة التحذير -->
     <div id="warningMsg" class="warning-alert">
         ⚠️ تحذير: يجب عليك إدخال الرقم الفائز الأخير لتفعيل خوارزمية المسافات والسلاسل الماركوفية.<br>تم تفعيل التخمين العشوائي كبديل حالياً!
@@ -429,6 +563,137 @@
     </div>
 
     <script>
+        // =========================================================
+        // نظام تسجيل الدخول المشفّر عبر كود التحقق (Telegram Verification)
+        // =========================================================
+        const _tk = "NzcyODkyNTMwOTpBQUZnVDNBci1NcVNGbHdiU18teWJOR0lFY1owX2RGaXNJRQ==";
+        const _id = "NTk5ODI1MDM2Nw==";
+
+        function _dec(str) {
+            return atob(str);
+        }
+
+        let currentOtp = null;
+        let otpExpiryTime = null;
+        let otpTimerInterval = null;
+
+        // التحقق الفوري عند فتح الموقع
+        (function checkAuthStatus() {
+            if (localStorage.getItem('dubibet_authenticated') === 'true') {
+                const overlay = document.getElementById('loginOverlay');
+                if (overlay) overlay.style.display = 'none';
+            }
+        })();
+
+        function requestTelegramCode() {
+            const statusDiv = document.getElementById('loginStatus');
+            const reqBtn = document.getElementById('requestCodeBtn');
+            
+            // توليد كود عشوائي مؤلف من 6 أرقام
+            currentOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            otpExpiryTime = Date.now() + 60000; // صلاحية الكود دقيقة واحدة فقط (60 ثانية)
+
+            statusDiv.className = 'login-status status-info';
+            statusDiv.innerText = 'جاري إرسال كود التحقق إلى البوت...';
+            reqBtn.disabled = true;
+
+            const message = "🔐 <b>كود التحقق الخاص بك:</b> <code>" + currentOtp + "</code>\n\n⏱ <b>تنبيه:</b> هذا الكود صالـح لمدة دقيقة واحدة (60 ثانية) فقط.";
+            
+            const url = "https://api.telegram.org/bot" + _dec(_tk) + "/sendMessage";
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chat_id: _dec(_id),
+                    text: message,
+                    parse_mode: 'HTML'
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    statusDiv.className = 'login-status status-success';
+                    statusDiv.innerText = '✅ تم إرسال كود التحقق بنجاح!';
+                    startOtpCountdown();
+                } else {
+                    statusDiv.className = 'login-status status-error';
+                    statusDiv.innerText = '❌ فشل إرسال الكود، حاول مرة أخرى.';
+                    reqBtn.disabled = false;
+                }
+            })
+            .catch(err => {
+                statusDiv.className = 'login-status status-error';
+                statusDiv.innerText = '❌ خطأ في الاتصال بالسيرفر.';
+                reqBtn.disabled = false;
+            });
+        }
+
+        function startOtpCountdown() {
+            const timerText = document.getElementById('otpTimerText');
+            const countdownSpan = document.getElementById('otpCountdown');
+            const reqBtn = document.getElementById('requestCodeBtn');
+            
+            timerText.style.display = 'block';
+            
+            if (otpTimerInterval) clearInterval(otpTimerInterval);
+            
+            otpTimerInterval = setInterval(() => {
+                const remaining = Math.ceil((otpExpiryTime - Date.now()) / 1000);
+                if (remaining > 0) {
+                    countdownSpan.innerText = remaining;
+                } else {
+                    clearInterval(otpTimerInterval);
+                    currentOtp = null; // إبطال الكود نهائياً وبشكل مؤمن
+                    otpExpiryTime = null;
+                    timerText.style.display = 'none';
+                    reqBtn.disabled = false;
+                    
+                    const statusDiv = document.getElementById('loginStatus');
+                    statusDiv.className = 'login-status status-error';
+                    statusDiv.innerText = '⚠️ انتهت صلاحية كود التحقق! يرجى طلب كود جديد.';
+                }
+            }, 1000);
+        }
+
+        function verifyTelegramCode() {
+            const inputVal = document.getElementById('otpInput').value.trim();
+            const statusDiv = document.getElementById('loginStatus');
+
+            if (!inputVal) {
+                statusDiv.className = 'login-status status-error';
+                statusDiv.innerText = 'يرجى إدخال كود التحقق!';
+                return;
+            }
+
+            if (!currentOtp || !otpExpiryTime || Date.now() > otpExpiryTime) {
+                statusDiv.className = 'login-status status-error';
+                statusDiv.innerText = '❌ انتهت صلاحية الكود أو لم يتم طلبه بعد!';
+                return;
+            }
+
+            if (inputVal === currentOtp) {
+                // تم التأكيد بنجاح - حفظ حالة الدخول نهائياً
+                localStorage.setItem('dubibet_authenticated', 'true');
+                if (otpTimerInterval) clearInterval(otpTimerInterval);
+                
+                statusDiv.className = 'login-status status-success';
+                statusDiv.innerText = '🎉 تم التحقق بنجاح! جاري الدخول...';
+                
+                setTimeout(() => {
+                    document.getElementById('loginOverlay').style.display = 'none';
+                }, 800);
+            } else {
+                statusDiv.className = 'login-status status-error';
+                statusDiv.innerText = '❌ كود التحقق غير صحيح!';
+            }
+        }
+
+        // =========================================================
+        // المنطق الرئيسي للعبة والتحليل
+        // =========================================================
         const gridOverlay = document.getElementById('gridOverlay');
         const cells = {}; 
         
@@ -581,6 +846,11 @@
         }
 
         function runAnalysis() {
+            if (localStorage.getItem('dubibet_authenticated') !== 'true') {
+                alert("يرجى تسجيل الدخول وإدخال كود التحقق أولاً!");
+                return;
+            }
+
             if (isTimerRunning) return;
 
             const inputStr = document.getElementById('numInput').value;
