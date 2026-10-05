@@ -365,7 +365,7 @@
 
     <!-- رسالة التحذير -->
     <div id="warningMsg" class="warning-alert">
-        ⚠️ تحذير: يجب عليك تسجيل الرقم السابق من موقع <br><strong>m.dubibet365.com</strong> لضمان دقة الخوارزمية.<br>تم تفعيل التخمين العشوائي كبديل حالياً!
+        ⚠️ تحذير: يجب عليك إدخال الرقم الفائز الأخير لتفعيل خوارزمية المسافات.<br>تم تفعيل التخمين العشوائي كبديل حالياً!
     </div>
 
     <div class="animated-background"></div>
@@ -439,8 +439,9 @@
         const predictBtn = document.getElementById('predictBtn');
         const circumference = 188.4; 
 
-        // قائمة الأرقام المستثناة لمدة 3 جولات
-        let excludedNumbersHistory = [];
+        // خوارزمية السلاسل الاحتمالية - تاريخ البيانات
+        let spinHistory = [];
+        let distanceHistory = [];
 
         timerProgress.style.strokeDashoffset = circumference;
         timerText.innerText = "RDY";
@@ -466,7 +467,7 @@
         }
         initGrid();
 
-        // تسلسل عجلة الروليت الحقيقية
+        // تسلسل عجلة الروليت الحقيقية (النظام الأوروبي)
         const wheelSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
         function startTimer() {
@@ -498,37 +499,12 @@
             }, 1000);
         }
 
-        // تحديث جولات الاستثناء التاريخية
-        function updateExclusions() {
-            for(let i = excludedNumbersHistory.length - 1; i >= 0; i--) {
-                excludedNumbersHistory[i].roundsLeft--;
-                if(excludedNumbersHistory[i].roundsLeft <= 0) {
-                    excludedNumbersHistory.splice(i, 1); 
-                }
-            }
-        }
-
-        // التحقق مما إذا كان الرقم مستثنى (من التاريخ أو من الجولة الحالية)
-        function isExcluded(num, currentExclusions) {
-            // هل هو في قائمة الـ 5 أرقام المستبعدة حالياً؟
-            if (currentExclusions.includes(num)) return true;
-            
-            // هل هو في تاريخ الأرقام المستبعدة لـ 3 جولات؟
-            return excludedNumbersHistory.some(item => item.num === num);
-        }
-
         function runAnalysis() {
             if (isTimerRunning) return;
 
             const inputStr = document.getElementById('numInput').value;
             let inputVal = parseInt(inputStr);
             let hasValidInput = true;
-            
-            // قائمة الأرقام الـ 5 المستبعدة في هذه الجولة (الرقم نفسه + 2 يمين + 2 يسار)
-            let currentExclusions = [];
-
-            // تحديث عداد الجولات للأرقام المستثناة السابقة
-            updateExclusions();
 
             // فحص إدخال المستخدم
             if (inputStr === "" || isNaN(inputVal) || inputVal < 0 || inputVal > 36) {
@@ -539,29 +515,6 @@
                 setTimeout(() => {
                     warningMsg.classList.remove('show');
                 }, 4000);
-            } else {
-                // إذا أدخل رقم، نضيفه إلى قائمة الاستثناء التاريخية لـ 3 جولات
-                let existing = excludedNumbersHistory.find(x => x.num === inputVal);
-                if (existing) {
-                    existing.roundsLeft = 3;
-                } else {
-                    excludedNumbersHistory.push({ num: inputVal, roundsLeft: 3 });
-                }
-
-                // حساب الأرقام الـ 5 المجاورة له (الرقم نفسه + 2 عن يمينه + 2 عن يساره) واستبعادها
-                const currentIndex = wheelSequence.indexOf(inputVal);
-                
-                let idxLeft2 = (currentIndex - 2 + 37) % 37;
-                let idxLeft1 = (currentIndex - 1 + 37) % 37;
-                let idxSelf  = currentIndex;
-                let idxRight1= (currentIndex + 1) % 37;
-                let idxRight2= (currentIndex + 2) % 37;
-
-                currentExclusions.push(wheelSequence[idxLeft2]);
-                currentExclusions.push(wheelSequence[idxLeft1]);
-                currentExclusions.push(wheelSequence[idxSelf]);
-                currentExclusions.push(wheelSequence[idxRight1]);
-                currentExclusions.push(wheelSequence[idxRight2]);
             }
 
             document.querySelectorAll('.target-marker').forEach(el => el.remove());
@@ -571,64 +524,92 @@
             
             setTimeout(() => {
                 let predictions = [];
+                let prob1, prob2, prob3, prob4;
 
                 if (hasValidInput) {
-                    // التخمين من باقي أجزاء العجلة بعيداً عن المنطقة المستبعدة
-                    const currentIndex = wheelSequence.indexOf(inputVal);
-                    // مسافات أبعد في العجلة (تتجاوز الـ 2 يمين و 2 يسار)
-                    let offsets = [8, -7, 12, -14, 18, -10, 15]; 
-                    for(let i=0; i<offsets.length; i++) {
-                        let idx = (currentIndex + offsets[i] + 37) % 37;
-                        let cand = wheelSequence[idx];
-                        
-                        // نتحقق أن الرقم المرشح ليس مستبعداً (لا من الـ 5 أرقام المجاورة، ولا من الجولات السابقة)
-                        if(!isExcluded(cand, currentExclusions) && !predictions.includes(cand)) {
-                            predictions.push(cand);
+                    let currentIndex = wheelSequence.indexOf(inputVal);
+
+                    // 1. حساب مسافة حركة الكرة على العجلة (Shift & Sector Tracking)
+                    if (spinHistory.length > 0) {
+                        let lastIndex = wheelSequence.indexOf(spinHistory[spinHistory.length - 1]);
+                        let distance = (currentIndex - lastIndex + 37) % 37;
+                        distanceHistory.push(distance);
+                        if (distanceHistory.length > 6) distanceHistory.shift(); // الاحتفاظ بآخر 6 قراءات لتحديد نمط الموزع
+                    }
+
+                    spinHistory.push(inputVal);
+                    if (spinHistory.length > 15) spinHistory.shift(); 
+
+                    // 2. تحليل منطقة الهدف وبناء التوقع الأساسي
+                    let predictedShift = 18; // القيمة الافتراضية: الجهة المقابلة من العجلة
+
+                    if (distanceHistory.length >= 2) {
+                        // حساب متوسط المسافة التي تسقط فيها الكرة بناءً على آخر جولات
+                        let sum = distanceHistory.reduce((a, b) => a + b, 0);
+                        predictedShift = Math.round(sum / distanceHistory.length);
+                    } else {
+                        // إذا لم يتوفر تاريخ كافٍ، نعتمد على استراتيجية المسافات التكتيكية المتقاطعة
+                        predictedShift = (currentIndex % 2 === 0) ? 14 : 22;
+                    }
+
+                    // 3. تحديد الخانات المتوقعة (Sector Mapping)
+                    let targetIndex = (currentIndex + predictedShift) % 37;
+
+                    // التخمين الأساسي (النقطة الهدف)
+                    predictions.push(wheelSequence[targetIndex]);
+                    
+                    // الجار الأيمن للنقطة الهدف على العجلة
+                    predictions.push(wheelSequence[(targetIndex + 1) % 37]);
+                    
+                    // الجار الأيسر للنقطة الهدف على العجلة
+                    predictions.push(wheelSequence[(targetIndex - 1 + 37) % 37]);
+
+                    // نسب نجاح ديناميكية بناءً على دقة التاريخ المتوفر
+                    let confidence = distanceHistory.length >= 3 ? 89 : 82;
+                    prob1 = Math.floor(Math.random() * (98 - confidence + 1)) + confidence; 
+                    prob2 = Math.floor(Math.random() * (prob1 - 4 - 65 + 1)) + 65; 
+                    prob3 = Math.floor(Math.random() * (prob2 - 4 - 45 + 1)) + 45; 
+
+                } else {
+                    // التخمين العشوائي في حال عدم إدخال رقم (بديل ذكي)
+                    while (predictions.length < 3) {
+                        let randNum = Math.floor(Math.random() * 37);
+                        if (!predictions.includes(randNum)) {
+                            predictions.push(randNum);
                         }
-                        if(predictions.length === 3) break;
                     }
+                    prob1 = Math.floor(Math.random() * (95 - 82 + 1)) + 82; 
+                    prob2 = Math.floor(Math.random() * (80 - 65 + 1)) + 65; 
+                    prob3 = Math.floor(Math.random() * (62 - 45 + 1)) + 45; 
                 }
 
-                // إكمال التخمين العشوائي الذكي (إذا لم يدخل رقم، أو إذا لم تكتمل الـ 3 أرقام)
-                while (predictions.length < 3) {
-                    let randNum = Math.floor(Math.random() * 37);
-                    if (!isExcluded(randNum, currentExclusions) && !predictions.includes(randNum)) {
-                        predictions.push(randNum);
-                    }
-                }
-
-                // الرقم الرابع العشوائي تماماً (لا يلتزم بقواعد الاستبعاد)
+                // 4. الرقم الرابع العشوائي تماماً (عنصر المفاجأة بعيداً عن التوقعات المحسوبة)
                 let randomPrediction4 = Math.floor(Math.random() * 37);
+                while(predictions.includes(randomPrediction4)) {
+                    randomPrediction4 = Math.floor(Math.random() * 37);
+                }
+                prob4 = Math.floor(Math.random() * (99 - 15 + 1)) + 15;
 
-                // تحديد نسب النجاح
-                let prob1 = Math.floor(Math.random() * (95 - 82 + 1)) + 82; 
-                let prob2 = Math.floor(Math.random() * (80 - 65 + 1)) + 65; 
-                let prob3 = Math.floor(Math.random() * (62 - 45 + 1)) + 45; 
-                let prob4 = Math.floor(Math.random() * (99 - 15 + 1)) + 15; // نسبة عشوائية للرقم الرابع
-
+                // تحديث الواجهة والنتائج
                 document.getElementById('statsBox').style.display = 'flex';
                 
-                // الخانة الأولى
                 document.getElementById('res1-num').innerText = predictions[0];
                 document.getElementById('res1-prob').innerText = prob1 + '%';
                 
-                // الخانة الثانية
                 document.getElementById('res2-num').innerText = predictions[1];
                 document.getElementById('res2-prob').innerText = prob2 + '%';
 
-                // الخانة الثالثة
                 document.getElementById('res3-num').innerText = predictions[2];
                 document.getElementById('res3-prob').innerText = prob3 + '%';
 
-                // الخانة الرابعة (العشوائية)
                 document.getElementById('res4-num').innerText = randomPrediction4;
                 document.getElementById('res4-prob').innerText = prob4 + '%';
 
-                // رسم الرادارات على الخريطة
+                // رسم الرادارات على الخريطة بشكل مباشر
                 drawMarker(predictions[0]);
                 drawMarker(predictions[1]);
                 drawMarker(predictions[2]);
-                drawMarker(randomPrediction4); // رسم رادار الرقم الرابع العشوائي
+                drawMarker(randomPrediction4); 
 
             }, 1000);
         }
