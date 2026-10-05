@@ -9,6 +9,7 @@
             --bg-color: #08000f;
             --neon-primary: #a200ff;
             --neon-secondary: #ff00ea;
+            --neon-tertiary: #00eaff; /* لون للخانة الثالثة */
             --timer-color: #ffd700; 
             --text-glow: 0 0 10px rgba(162, 0, 255, 0.5);
             --danger-color: #ff3366;
@@ -28,6 +29,33 @@
             overflow-y: auto;
             position: relative;
             padding-bottom: 100px; 
+        }
+
+        /* رسالة التحذير المنزلقة */
+        .warning-alert {
+            position: fixed;
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #8b0000, #ff0033);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 0 0 15px 15px;
+            border: 2px solid #ff3366;
+            border-top: none;
+            box-shadow: 0 5px 25px rgba(255, 51, 102, 0.6);
+            z-index: 9999;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            line-height: 1.5;
+        }
+
+        .warning-alert.show {
+            top: 0;
         }
 
         .animated-background {
@@ -221,7 +249,7 @@
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
-            gap: 10px;
+            gap: 8px; /* تقليل المسافة قليلاً لتتسع 3 مربعات */
         }
 
         .stat-item {
@@ -229,14 +257,14 @@
             background: rgba(5, 0, 10, 0.8);
             border: 1px solid #2a0845;
             border-radius: 8px;
-            padding: 15px;
+            padding: 10px;
             text-align: center;
             position: relative;
             overflow: hidden;
         }
         
         .stat-item .num {
-            font-size: 2.2em;
+            font-size: 2em;
             font-weight: bold;
             color: #fff;
             margin-bottom: 5px;
@@ -244,7 +272,7 @@
         }
         
         .stat-item .prob {
-            font-size: 0.9em;
+            font-size: 0.75em;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -254,6 +282,9 @@
         
         .medium-prob { border-color: var(--neon-secondary); }
         .medium-prob .prob { color: var(--neon-secondary); }
+
+        .low-prob { border-color: var(--neon-tertiary); box-shadow: 0 0 15px rgba(0, 234, 255, 0.15); }
+        .low-prob .prob { color: var(--neon-tertiary); }
 
         .timer-container {
             position: fixed;
@@ -305,6 +336,11 @@
 </head>
 <body>
 
+    <!-- رسالة التحذير -->
+    <div id="warningMsg" class="warning-alert">
+        ⚠️ تحذير: يجب عليك تسجيل الرقم السابق من موقع <br><strong>m.dubibet365.com</strong> لضمان دقة الخوارزمية.<br>تم تفعيل التخمين العشوائي كبديل حالياً!
+    </div>
+
     <div class="animated-background"></div>
     <div class="scanning-lines"></div>
 
@@ -329,14 +365,19 @@
             
             <a href="https://m.dubibet365.com/" target="_blank" class="btn btn-link">CONNECT TO DUBIBET SERVER</a>
 
+            <!-- تعديل ليحتوي على 3 خانات -->
             <div class="stats-box" id="statsBox" style="display: none;">
                 <div class="stat-item high-prob">
                     <div class="num" id="res1-num">--</div>
-                    <div class="prob">High Match: <span id="res1-prob">--%</span></div>
+                    <div class="prob">High: <span id="res1-prob">--%</span></div>
                 </div>
                 <div class="stat-item medium-prob">
                     <div class="num" id="res2-num">--</div>
-                    <div class="prob">Med Match: <span id="res2-prob">--%</span></div>
+                    <div class="prob">Med: <span id="res2-prob">--%</span></div>
+                </div>
+                <div class="stat-item low-prob">
+                    <div class="num" id="res3-num">--</div>
+                    <div class="prob">Low: <span id="res3-prob">--%</span></div>
                 </div>
             </div>
         </div>
@@ -360,6 +401,9 @@
         const timerText = document.getElementById('timerText');
         const predictBtn = document.getElementById('predictBtn');
         const circumference = 188.4; 
+
+        // قائمة الأرقام المستثناة لمدة 3 جولات
+        let excludedNumbers = [];
 
         timerProgress.style.strokeDashoffset = circumference;
         timerText.innerText = "RDY";
@@ -385,7 +429,6 @@
         }
         initGrid();
 
-        // الترتيب الفعلي لعجلة الروليت (الأوروبي)
         const wheelSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
         function startTimer() {
@@ -417,22 +460,48 @@
             }, 1000);
         }
 
+        // تحديث جولات الاستثناء
+        function updateExclusions() {
+            for(let i = excludedNumbers.length - 1; i >= 0; i--) {
+                excludedNumbers[i].roundsLeft--;
+                if(excludedNumbers[i].roundsLeft <= 0) {
+                    excludedNumbers.splice(i, 1); // إزالة الرقم بعد 3 جولات
+                }
+            }
+        }
+
+        // التحقق مما إذا كان الرقم مستثنى
+        function isExcluded(num) {
+            return excludedNumbers.some(item => item.num === num);
+        }
+
         function runAnalysis() {
             if (isTimerRunning) return;
 
-            let inputElement = document.getElementById('numInput');
-            let rawVal = inputElement.value.trim();
+            const inputStr = document.getElementById('numInput').value;
+            let inputVal = parseInt(inputStr);
+            let hasValidInput = true;
 
-            // 1. الخوارزمية الذكية: التأكد من إدخال رقم لعملية الاستثناء
-            if (rawVal === "") {
-                alert("⚠️ تنبيه: يرجى إدخال الرقم الأخير الذي سقطت عليه الكرة!\n\nتحتاج الخوارزمية لمعرفة الرقم السابق لتقوم باستثناء منطقة سقوطه (الرقم والأرقام المجاورة له على عجلة الروليت) لأن نسبة عودة الكرة لنفس المنطقة الملاصقة ضعيفة جداً.");
-                return; // إيقاف العملية حتى يتم الإدخال
-            }
+            // تحديث عداد الجولات للأرقام المستثناة السابقة
+            updateExclusions();
 
-            let inputVal = parseInt(rawVal);
-            if (isNaN(inputVal) || inputVal < 0 || inputVal > 36) {
-                alert("⚠️ خطأ: يرجى إدخال رقم صحيح موجود في الروليت (بين 0 و 36).");
-                return;
+            // فحص إدخال المستخدم
+            if (inputStr === "" || isNaN(inputVal) || inputVal < 0 || inputVal > 36) {
+                hasValidInput = false;
+                // إظهار رسالة التحذير المنزلقة
+                const warningMsg = document.getElementById('warningMsg');
+                warningMsg.classList.add('show');
+                setTimeout(() => {
+                    warningMsg.classList.remove('show');
+                }, 4000); // إخفاء بعد 4 ثواني
+            } else {
+                // إذا أدخل رقم، نضيفه إلى قائمة الاستثناء لـ 3 جولات قادمة
+                let existing = excludedNumbers.find(x => x.num === inputVal);
+                if (existing) {
+                    existing.roundsLeft = 3;
+                } else {
+                    excludedNumbers.push({ num: inputVal, roundsLeft: 3 });
+                }
             }
 
             document.querySelectorAll('.target-marker').forEach(el => el.remove());
@@ -441,37 +510,55 @@
             startTimer();
             
             setTimeout(() => {
-                // 2. نظام المنطقة المحظورة (استثناء الرقم ومحيطه في العجلة)
-                const currentIndex = wheelSequence.indexOf(inputVal);
-                let excludedNumbers = [];
-                
-                // نقوم باستثناء الرقم نفسه + 3 أرقام عن يمينه + 3 أرقام عن يساره في العجلة الدوارة
-                for(let i = -3; i <= 3; i++) {
-                    let neighborIndex = (currentIndex + i + 37) % 37;
-                    excludedNumbers.push(wheelSequence[neighborIndex]);
+                let predictions = [];
+
+                if (hasValidInput) {
+                    // تخمين ذكي بناءً على الخوارزمية (الأرقام المجاورة في العجلة)
+                    const currentIndex = wheelSequence.indexOf(inputVal);
+                    // محاولة جلب أرقام بنطاقات مدروسة مع التأكد أنها غير مستثناة
+                    let offsets = [5, -4, 9, -12, 15]; 
+                    for(let i=0; i<offsets.length; i++) {
+                        let idx = (currentIndex + offsets[i] + 37) % 37;
+                        let cand = wheelSequence[idx];
+                        if(!isExcluded(cand) && !predictions.includes(cand)) {
+                            predictions.push(cand);
+                        }
+                        if(predictions.length === 3) break;
+                    }
                 }
 
-                // 3. فلترة الأرقام لإنشاء قائمة بالأرقام القابلة للتخمين
-                let availableNumbers = wheelSequence.filter(num => !excludedNumbers.includes(num));
+                // إكمال التخمين العشوائي الذكي (إذا لم يدخل رقم، أو إذا لم تكتمل الـ 3 أرقام)
+                while (predictions.length < 3) {
+                    let randNum = Math.floor(Math.random() * 37);
+                    if (!isExcluded(randNum) && !predictions.includes(randNum)) {
+                        predictions.push(randNum);
+                    }
+                }
 
-                // 4. خلط الأرقام المتاحة بشكل عشوائي وذكي لاختيار رقمين منها
-                availableNumbers.sort(() => 0.5 - Math.random());
-
-                let num1 = availableNumbers[0];
-                let num2 = availableNumbers[1];
-
-                // توليد نسب مئوية قوية
-                let prob1 = Math.floor(Math.random() * (89 - 78 + 1)) + 78; // نسبة عالية
-                let prob2 = Math.floor(Math.random() * ((prob1 - 8) - 62 + 1)) + 62; // نسبة متوسطة
+                // تحديد نسب النجاح للثلاث أرقام
+                let prob1 = Math.floor(Math.random() * (95 - 82 + 1)) + 82; // عالية
+                let prob2 = Math.floor(Math.random() * (80 - 65 + 1)) + 65; // متوسطة
+                let prob3 = Math.floor(Math.random() * (62 - 45 + 1)) + 45; // منخفضة
 
                 document.getElementById('statsBox').style.display = 'flex';
-                document.getElementById('res1-num').innerText = num1;
+                
+                // الخانة الأولى
+                document.getElementById('res1-num').innerText = predictions[0];
                 document.getElementById('res1-prob').innerText = prob1 + '%';
-                document.getElementById('res2-num').innerText = num2;
+                
+                // الخانة الثانية
+                document.getElementById('res2-num').innerText = predictions[1];
                 document.getElementById('res2-prob').innerText = prob2 + '%';
 
-                drawMarker(num1);
-                drawMarker(num2);
+                // الخانة الثالثة
+                document.getElementById('res3-num').innerText = predictions[2];
+                document.getElementById('res3-prob').innerText = prob3 + '%';
+
+                // رسم الرادارات على الخريطة
+                drawMarker(predictions[0]);
+                drawMarker(predictions[1]);
+                drawMarker(predictions[2]);
+
             }, 1000);
         }
 
