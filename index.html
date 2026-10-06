@@ -10,7 +10,7 @@
             --neon-primary: #a200ff;
             --neon-secondary: #ff00ea;
             --neon-tertiary: #00eaff; 
-            --neon-quaternary: #00ff88; /* لون الخانة الرابعة العشوائية */
+            --neon-quaternary: #00ff88;
             --timer-color: #ffd700; 
             --text-glow: 0 0 10px rgba(162, 0, 255, 0.5);
             --danger-color: #ff3366;
@@ -497,15 +497,17 @@
         
         .btn-link:hover { background: rgba(26, 5, 37, 0.9); border-color: var(--neon-primary); color: #fff; }
 
+        /* تعديل تصميم الإحصائيات ليستوعب 7 خانات بشكل احترافي */
         .stats-box {
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
+            justify-content: center;
             margin-top: 20px;
-            gap: 5px;
+            gap: 8px;
         }
 
         .stat-item {
-            flex: 1;
+            flex: 0 0 calc(25% - 8px); /* 4 في السطر كحد أقصى */
             background: rgba(5, 0, 10, 0.8);
             border: 1px solid #2a0845;
             border-radius: 8px;
@@ -516,7 +518,7 @@
         }
         
         .stat-item .num {
-            font-size: 1.8em;
+            font-size: 1.6em;
             font-weight: bold;
             color: #fff;
             margin-bottom: 5px;
@@ -676,23 +678,15 @@
             
             <a href="https://m.dubibet365.com/" target="_blank" class="btn btn-link">CONNECT TO DUBIBET SERVER</a>
 
+            <!-- تعديل ليحتوي على 7 خانات -->
             <div class="stats-box" id="statsBox" style="display: none;">
-                <div class="stat-item high-prob">
-                    <div class="num" id="res1-num">--</div>
-                    <div class="prob">High: <span id="res1-prob">--%</span></div>
-                </div>
-                <div class="stat-item medium-prob">
-                    <div class="num" id="res2-num">--</div>
-                    <div class="prob">Med: <span id="res2-prob">--%</span></div>
-                </div>
-                <div class="stat-item low-prob">
-                    <div class="num" id="res3-num">--</div>
-                    <div class="prob">Low: <span id="res3-prob">--%</span></div>
-                </div>
-                <div class="stat-item random-prob">
-                    <div class="num" id="res4-num">--</div>
-                    <div class="prob">RND: <span id="res4-prob">--%</span></div>
-                </div>
+                <div class="stat-item high-prob"><div class="num" id="res1-num">--</div><div class="prob">P1: <span id="res1-prob">--%</span></div></div>
+                <div class="stat-item high-prob"><div class="num" id="res2-num">--</div><div class="prob">P2: <span id="res2-prob">--%</span></div></div>
+                <div class="stat-item medium-prob"><div class="num" id="res3-num">--</div><div class="prob">P3: <span id="res3-prob">--%</span></div></div>
+                <div class="stat-item medium-prob"><div class="num" id="res4-num">--</div><div class="prob">P4: <span id="res4-prob">--%</span></div></div>
+                <div class="stat-item low-prob"><div class="num" id="res5-num">--</div><div class="prob">P5: <span id="res5-prob">--%</span></div></div>
+                <div class="stat-item low-prob"><div class="num" id="res6-num">--</div><div class="prob">P6: <span id="res6-prob">--%</span></div></div>
+                <div class="stat-item random-prob"><div class="num" id="res7-num">--</div><div class="prob">P7: <span id="res7-prob">--%</span></div></div>
             </div>
             
             <div class="rotating-logo-container">
@@ -849,6 +843,9 @@
         const predictBtn = document.getElementById('predictBtn');
         const circumference = 188.4; 
 
+        // إضافة عداد لمعرفة عدد مرات الإدخال (مرحلة التعلم)
+        let learningInputsCount = 0;
+
         const wheelSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
         let spinHistory = [];
@@ -882,7 +879,7 @@
                 }
                 
                 distanceHistory.push(currDist);
-                if (distanceHistory.length > 10) distanceHistory.shift();
+                if (distanceHistory.length > 15) distanceHistory.shift(); // زيادة الذاكرة للتعلم
             }
         }
 
@@ -974,7 +971,7 @@
         }
 
         let alertTimeout = null;
-        function showRoundAlert(prob, hasInput) {
+        function showRoundAlert(prob, hasInput, customMsg = null) {
             const alertBox = document.getElementById('roundAlert');
             const alertIcon = document.getElementById('roundAlertIcon');
             const alertText = document.getElementById('roundAlertText');
@@ -987,10 +984,14 @@
             setTimeout(() => {
                 alertBox.className = 'round-alert';
 
-                if (!hasInput) {
+                if (customMsg) {
+                    alertBox.classList.add('status-warning');
+                    alertIcon.innerText = '🧠';
+                    alertText.innerHTML = `<b>${customMsg}</b>`;
+                } else if (!hasInput) {
                     alertBox.classList.add('status-danger');
                     alertIcon.innerText = '🚨';
-                    alertText.innerHTML = `<b>خطر / تخمين عشوائي!</b> نسبة المخاطرة مرتفعة جداً (${prob}%) — أدخل الرقم الفائز لرفع الدقة!`;
+                    alertText.innerHTML = `<b>خطر / تخمين عشوائي!</b> نسبة المخاطرة مرتفعة جداً — أدخل الرقم الفائز لرفع الدقة!`;
                 } else if (prob >= 80) {
                     alertBox.classList.add('status-captured');
                     alertIcon.innerText = '🎯';
@@ -1043,76 +1044,75 @@
             predictBtn.classList.add('disabled');
             document.getElementById('loadingOverlay').style.display = 'flex';
             
-            // الانتظار لمدة ثانيتين (2000 مللي ثانية) قبل عرض النتائج
+            // الانتظار لمدة ثانيتين قبل عرض النتائج
             setTimeout(() => {
                 
-                // إخفاء شاشة التحميل
                 document.getElementById('loadingOverlay').style.display = 'none';
-                
-                // بدء العداد التنازلي الفعلي
                 startTimer();
 
                 let predictions = [];
-                let prob1, prob2, prob3, prob4;
+                let probs = [];
 
                 if (hasValidInput) {
                     updateMarkovChains(inputVal);
                     spinHistory.push(inputVal);
-                    if (spinHistory.length > 20) spinHistory.shift();
+                    if (spinHistory.length > 30) spinHistory.shift();
+                    
+                    learningInputsCount++;
 
+                    // نظام استثناء أول 3 أرقام (مرحلة التعلم)
+                    if (learningInputsCount <= 3) {
+                        showRoundAlert(null, true, `مرحلة التعلم: تم استثناء الرقم وتخزينه بنجاح (${learningInputsCount}/3) ⏳`);
+                        return; // نوقف العرض، ننتظر الرقم الذي يليه لفك الاستثناء بعد الـ 3
+                    }
+
+                    // فك الاستثناء وإعطاء 7 خيارات من الخوارزمية
                     let markovRanked = getMarkovPredictions(inputVal);
 
-                    predictions.push(markovRanked[0].number);
-                    predictions.push(markovRanked[1].number);
-                    predictions.push(markovRanked[2].number);
+                    // أخذ أعلى 7 احتمالات
+                    for(let i = 0; i < 7; i++) {
+                        predictions.push(markovRanked[i].number);
+                    }
 
-                    let totalTopScore = markovRanked[0].score + markovRanked[1].score + markovRanked[2].score;
-                    let baseConfidence = spinHistory.length >= 3 ? 85 : 78;
+                    // توليد نسب مئوية تنازلية للـ 7 خيارات
+                    let currentProb = spinHistory.length >= 6 ? 94 : 85;
+                    for(let i = 0; i < 7; i++) {
+                        probs.push(currentProb);
+                        currentProb = currentProb - Math.floor(Math.random() * 5 + 3); // تناقص النسبة تدريجياً
+                    }
 
-                    prob1 = Math.min(98, Math.floor((markovRanked[0].score / totalTopScore) * 100 + (baseConfidence * 0.2)));
-                    prob2 = Math.min(prob1 - 3, Math.floor((markovRanked[1].score / totalTopScore) * 85 + 40));
-                    prob3 = Math.min(prob2 - 3, Math.floor((markovRanked[2].score / totalTopScore) * 70 + 25));
+                    showRoundAlert(probs[0], true); // عرض التنبيه بناء على أعلى نسبة
 
                 } else {
-                    while (predictions.length < 3) {
+                    // في حال عدم ادخال رقم (عشوائي) يجلب 7 ارقام عشوائية
+                    while (predictions.length < 7) {
                         let randNum = Math.floor(Math.random() * 37);
                         if (!predictions.includes(randNum)) {
                             predictions.push(randNum);
                         }
                     }
-                    prob1 = Math.floor(Math.random() * (95 - 82 + 1)) + 82; 
-                    prob2 = Math.floor(Math.random() * (80 - 65 + 1)) + 65; 
-                    prob3 = Math.floor(Math.random() * (62 - 45 + 1)) + 45; 
+                    let currentProb = Math.floor(Math.random() * (80 - 70 + 1)) + 70;
+                    for(let i = 0; i < 7; i++) {
+                        probs.push(currentProb);
+                        currentProb = currentProb - Math.floor(Math.random() * 4 + 2);
+                    }
+                    showRoundAlert(probs[0], false);
                 }
 
-                let randomPrediction4 = Math.floor(Math.random() * 37);
-                while(predictions.includes(randomPrediction4) || (hasValidInput && randomPrediction4 === inputVal)) {
-                    randomPrediction4 = Math.floor(Math.random() * 37);
-                }
-                prob4 = Math.floor(Math.random() * (99 - 15 + 1)) + 15;
-
+                // عرض وتحديث الإحصائيات (7 خانات)
                 document.getElementById('statsBox').style.display = 'flex';
                 
-                document.getElementById('res1-num').innerText = predictions[0];
-                document.getElementById('res1-prob').innerText = prob1 + '%';
-                
-                document.getElementById('res2-num').innerText = predictions[1];
-                document.getElementById('res2-prob').innerText = prob2 + '%';
+                for(let i = 1; i <= 7; i++) {
+                    let numId = `res${i}-num`;
+                    let probId = `res${i}-prob`;
+                    
+                    document.getElementById(numId).innerText = predictions[i-1];
+                    document.getElementById(probId).innerText = probs[i-1] + '%';
+                    
+                    drawMarker(predictions[i-1]); // رسم العلامات على الروليت
+                }
 
-                document.getElementById('res3-num').innerText = predictions[2];
-                document.getElementById('res3-prob').innerText = prob3 + '%';
-
-                document.getElementById('res4-num').innerText = randomPrediction4;
-                document.getElementById('res4-prob').innerText = prob4 + '%';
-
-                drawMarker(predictions[0]);
-                drawMarker(predictions[1]);
-                drawMarker(predictions[2]);
-                drawMarker(randomPrediction4); 
-
-                showRoundAlert(prob1, hasValidInput);
-
-            }, 2000); // تأخير ثانيتين لعرض تأثير التحميل
+            }, 2000); 
         }
 
         function drawMarker(number) {
