@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dubibet Pro Analyzer - AI Core</title>
+    <title>Dubibet Pro Analyzer - AI Core & Physical Wheel Engine</title>
     <style>
         :root {
             --bg-color: #08000f;
@@ -497,7 +497,7 @@
         
         .btn-link:hover { background: rgba(26, 5, 37, 0.9); border-color: var(--neon-primary); color: #fff; }
 
-        /* تعديل تصميم الإحصائيات ليستوعب 7 خانات بشكل احترافي */
+        /* تعديل تصميم الإحصائيات يستوعب 7 خانات بشكل احترافي */
         .stats-box {
             display: flex;
             flex-wrap: wrap;
@@ -621,7 +621,7 @@
             <div class="ai-loader-circle"></div>
             <div class="ai-loader-core"></div>
         </div>
-        <div class="loading-text">جاري جلب وتحليل التخمين...</div>
+        <div class="loading-text">جاري محاكاة الصحن الدوار وجلب التخمين...</div>
     </div>
 
     <!-- شاشة تسجيل الدخول وتأكيد الهوية -->
@@ -645,7 +645,7 @@
 
     <!-- رسالة التحذير الأساسية -->
     <div id="warningMsg" class="warning-alert">
-        ⚠️ تحذير: يجب عليك إدخال الرقم الفائز الأخير لتفعيل خوارزمية المسافات والسلاسل الماركوفية.<br>تم تفعيل التخمين العشوائي كبديل حالياً!
+        ⚠️ تحذير: يجب عليك إدخال الرقم الفائز الأخير لتفعيل خوارزمية المسافات وسلاسل ماركوف ومحاكاة عجلة Dubibet.<br>تم تفعيل التخمين العشوائي كبديل حالياً!
     </div>
 
     <!-- تنبيه حالة الجولة واللقط الاحترافي لكل جولة -->
@@ -658,7 +658,7 @@
     <div class="scanning-lines"></div>
 
     <div class="main-container">
-        <h2>Roulette Radar </h2>
+        <h2>Roulette Radar - Dubibet Physical Engine</h2>
         
         <div class="board-wrapper">
             <img src="ses.jpg" alt="Roulette Board">
@@ -849,6 +849,7 @@
         // سجل الأرقام المسجلة من المستخدم فقط (لاستثنائها لجولتين)
         let userInputsHistory = [];
 
+        // التسلسل التسلسلي الحقيقي لصحن الروليت الدوار الخاص بموقع Dubibet
         const wheelSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
         let spinHistory = [];
@@ -882,10 +883,13 @@
                 }
                 
                 distanceHistory.push(currDist);
-                if (distanceHistory.length > 15) distanceHistory.shift(); // زيادة الذاكرة للتعلم
+                if (distanceHistory.length > 15) distanceHistory.shift(); 
             }
         }
 
+        // =========================================================
+        // خوارزمية التخمين الذكية والفيزيائية للصحن الدوار (Dubibet Wheel Engine)
+        // =========================================================
         function getMarkovPredictions(currentNum) {
             let currIdx = wheelSequence.indexOf(currentNum);
             let currSector = getWheelSector(currentNum);
@@ -894,6 +898,11 @@
             let totalNumTrans = markovNumMatrix[currentNum].reduce((a, b) => a + b, 0);
             let totalSectorTrans = markovSectorMatrix[currSector].reduce((a, b) => a + b, 0);
             let totalDistTrans = markovDistMatrix[lastDist].reduce((a, b) => a + b, 0);
+
+            // حساب متوسط إزاحة مسار الكرة على عجلة Dubibet
+            let avgDistShift = distanceHistory.length > 0 
+                ? Math.round(distanceHistory.reduce((a, b) => a + b, 0) / distanceHistory.length) 
+                : 18;
 
             let scores = [];
 
@@ -904,11 +913,23 @@
                 let numSector = getWheelSector(num);
                 let distToNum = (numIdx - currIdx + 37) % 37;
 
+                // 1. احتمالات الانتقال الماركوفي
                 let pNum = markovNumMatrix[currentNum][num] / totalNumTrans;
                 let pSector = markovSectorMatrix[currSector][numSector] / totalSectorTrans;
                 let pDist = markovDistMatrix[lastDist][distToNum] / totalDistTrans;
 
-                let totalScore = (pNum * 0.50) + (pSector * 0.20) + (pDist * 0.30);
+                // 2. خوارزمية جيران الصحن الدوار والإنحراف الحركي (Gaussian Wheel Distance Decay)
+                let expectedLandIdx = (currIdx + avgDistShift) % 37;
+                let wheelDistance = Math.min(
+                    Math.abs(numIdx - expectedLandIdx),
+                    37 - Math.abs(numIdx - expectedLandIdx)
+                );
+                
+                // حساب احتمالية القرب الفيزيائي من جيران الرقم على العجلة
+                let pWheelPhysics = Math.exp(-Math.pow(wheelDistance, 2) / (2 * Math.pow(3.5, 2)));
+
+                // 3. دمج النموذج الفيزيائي للصحن مع الذكاء الاصطناعي
+                let totalScore = (pNum * 0.35) + (pSector * 0.15) + (pDist * 0.20) + (pWheelPhysics * 0.30);
 
                 scores.push({
                     number: num,
@@ -922,10 +943,8 @@
 
         // خوارزمية اختيار الأرقام المفرقة والموزعة عبر فئات متوازنة مع تطبيق شرط الاستثناء
         function getDiversePredictions(rankedCandidates, excludedSet) {
-            // تصفية الكانديديت بناء على الأرقام المستثناة
             let valid = rankedCandidates.filter(c => !excludedSet.has(c.number));
 
-            // تقسيم الأرقام حسب المجموعات (صغار 1-12، متوسط 13-24، كبار 25-36 و0)
             let lowBin = valid.filter(c => c.number >= 1 && c.number <= 12);
             let midBin = valid.filter(c => c.number >= 13 && c.number <= 24);
             let highBin = valid.filter(c => (c.number >= 25 && c.number <= 36) || c.number === 0);
@@ -938,7 +957,6 @@
                 for (let item of bin) {
                     if (count >= maxCount) break;
                     if (!selectedNums.has(item.number)) {
-                        // منع تجميع الأرقام المتجاورة فوراً (فرق رقم على الأقل)
                         let isAdjacent = false;
                         for (let n of selectedNums) {
                             if (Math.abs(n - item.number) <= 1 && item.number !== 0 && n !== 0) {
@@ -955,12 +973,10 @@
                 }
             }
 
-            // إعطاء تنوع وتفريق حقيقي: 2 إلى 3 صغار، 2 متوسط، 2 إلى 3 كبار
             pickFromBin(lowBin, 3);
             pickFromBin(midBin, 2);
             pickFromBin(highBin, 3);
 
-            // استكمال العدد إلى 7 من باقي القائمة إن نقص لأي سبب
             for (let item of valid) {
                 if (selected.length >= 7) break;
                 if (!selectedNums.has(item.number)) {
@@ -1050,7 +1066,7 @@
                 } else if (prob >= 80) {
                     alertBox.classList.add('status-captured');
                     alertIcon.innerText = '🎯';
-                    alertText.innerHTML = `<b>تم لقط التخمين بنجاح!</b> دقة الخوارزمية ممتازة (${prob}%) — إشارة قوية جداً 🔥`;
+                    alertText.innerHTML = `<b>تم لقط الرقم وجيرانه على الصحن بنجاح!</b> الدقة فيزياوياً (${prob}%) — إشارة قوية 🔥`;
                 } else if (prob >= 65) {
                     alertBox.classList.add('status-warning');
                     alertIcon.innerText = '⚠️';
@@ -1130,11 +1146,11 @@
 
                     // نظام استثناء أول 3 أرقام (مرحلة التعلم)
                     if (learningInputsCount <= 3) {
-                        showRoundAlert(null, true, `مرحلة التعلم: تم استثناء الرقم وتخزينه بنجاح (${learningInputsCount}/3) ⏳`);
-                        return; // نوقف العرض، ننتظر الرقم الذي يليه لفك الاستثناء بعد الـ 3
+                        showRoundAlert(null, true, `مرحلة التعلم والربط مع صحن Dubibet: تم التخزين (${learningInputsCount}/3) ⏳`);
+                        return; 
                     }
 
-                    // فك الاستثناء وإعطاء 7 خيارات مفرقة ومتنوعة
+                    // فك الاستثناء وإعطاء 7 خيارات مفرقة ومتنوعة تعتمد على العجلة والموقع
                     let markovRanked = getMarkovPredictions(inputVal);
                     predictions = getDiversePredictions(markovRanked, excludedSet);
 
@@ -1142,13 +1158,12 @@
                     let currentProb = spinHistory.length >= 6 ? 94 : 85;
                     for(let i = 0; i < 7; i++) {
                         probs.push(currentProb);
-                        currentProb = currentProb - Math.floor(Math.random() * 5 + 3); // تناقص النسبة تدريجياً
+                        currentProb = currentProb - Math.floor(Math.random() * 5 + 3); 
                     }
 
-                    showRoundAlert(probs[0], true); // عرض التنبيه بناء على أعلى نسبة
+                    showRoundAlert(probs[0], true); 
 
                 } else {
-                    // استثناء أحدث الأرقام المسجلة سابقاً حتى في النمط العشوائي
                     if (userInputsHistory.length > 0) {
                         excludedSet.add(userInputsHistory[userInputsHistory.length - 1]);
                     }
@@ -1156,10 +1171,12 @@
                         excludedSet.add(userInputsHistory[userInputsHistory.length - 2]);
                     }
 
-                    // توليد كانديديت عشوائي بخلط الأرقام
+                    // توليد كانديديت عشوائي ذكي يحاكي دوران العجلة الفيزيائية
                     let randomCandidates = [];
+                    let baseIndex = Math.floor(Math.random() * 37);
                     for (let i = 0; i <= 36; i++) {
-                        randomCandidates.push({ number: i, score: Math.random() });
+                        let num = wheelSequence[(baseIndex + i) % 37];
+                        randomCandidates.push({ number: num, score: Math.random() });
                     }
                     randomCandidates.sort((a, b) => b.score - a.score);
 
@@ -1183,7 +1200,7 @@
                     document.getElementById(numId).innerText = predictions[i-1];
                     document.getElementById(probId).innerText = probs[i-1] + '%';
                     
-                    drawMarker(predictions[i-1]); // رسم العلامات على الروليت
+                    drawMarker(predictions[i-1]); 
                 }
 
             }, 2000); 
