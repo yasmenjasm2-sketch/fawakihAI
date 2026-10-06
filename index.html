@@ -845,6 +845,9 @@
 
         // إضافة عداد لمعرفة عدد مرات الإدخال (مرحلة التعلم)
         let learningInputsCount = 0;
+        
+        // سجل الأرقام المسجلة من المستخدم فقط (لاستثنائها لجولتين)
+        let userInputsHistory = [];
 
         const wheelSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
@@ -915,6 +918,58 @@
 
             scores.sort((a, b) => b.score - a.score);
             return scores;
+        }
+
+        // خوارزمية اختيار الأرقام المفرقة والموزعة عبر فئات متوازنة مع تطبيق شرط الاستثناء
+        function getDiversePredictions(rankedCandidates, excludedSet) {
+            // تصفية الكانديديت بناء على الأرقام المستثناة
+            let valid = rankedCandidates.filter(c => !excludedSet.has(c.number));
+
+            // تقسيم الأرقام حسب المجموعات (صغار 1-12، متوسط 13-24، كبار 25-36 و0)
+            let lowBin = valid.filter(c => c.number >= 1 && c.number <= 12);
+            let midBin = valid.filter(c => c.number >= 13 && c.number <= 24);
+            let highBin = valid.filter(c => (c.number >= 25 && c.number <= 36) || c.number === 0);
+
+            let selected = [];
+            let selectedNums = new Set();
+
+            function pickFromBin(bin, maxCount) {
+                let count = 0;
+                for (let item of bin) {
+                    if (count >= maxCount) break;
+                    if (!selectedNums.has(item.number)) {
+                        // منع تجميع الأرقام المتجاورة فوراً (فرق رقم على الأقل)
+                        let isAdjacent = false;
+                        for (let n of selectedNums) {
+                            if (Math.abs(n - item.number) <= 1 && item.number !== 0 && n !== 0) {
+                                isAdjacent = true;
+                                break;
+                            }
+                        }
+                        if (!isAdjacent || bin.length <= 3) {
+                            selected.push(item);
+                            selectedNums.add(item.number);
+                            count++;
+                        }
+                    }
+                }
+            }
+
+            // إعطاء تنوع وتفريق حقيقي: 2 إلى 3 صغار، 2 متوسط، 2 إلى 3 كبار
+            pickFromBin(lowBin, 3);
+            pickFromBin(midBin, 2);
+            pickFromBin(highBin, 3);
+
+            // استكمال العدد إلى 7 من باقي القائمة إن نقص لأي سبب
+            for (let item of valid) {
+                if (selected.length >= 7) break;
+                if (!selectedNums.has(item.number)) {
+                    selected.push(item);
+                    selectedNums.add(item.number);
+                }
+            }
+
+            return selected.slice(0, 7).map(item => item.number);
         }
 
         timerProgress.style.strokeDashoffset = circumference;
@@ -1052,12 +1107,25 @@
 
                 let predictions = [];
                 let probs = [];
+                let excludedSet = new Set();
 
                 if (hasValidInput) {
+                    // تطبيق شرط الاستثناء: استثناء الرقم المكتوب حالياً
+                    excludedSet.add(inputVal);
+                    
+                    // استثناء الرقم المسجل في الجولة السابقة (لجولتين متتاليتين)
+                    if (userInputsHistory.length > 0) {
+                        excludedSet.add(userInputsHistory[userInputsHistory.length - 1]);
+                    }
+
                     updateMarkovChains(inputVal);
                     spinHistory.push(inputVal);
                     if (spinHistory.length > 30) spinHistory.shift();
                     
+                    // إضافة الرقم إلى سجل أرقام المستخدم
+                    userInputsHistory.push(inputVal);
+                    if (userInputsHistory.length > 10) userInputsHistory.shift();
+
                     learningInputsCount++;
 
                     // نظام استثناء أول 3 أرقام (مرحلة التعلم)
@@ -1066,13 +1134,9 @@
                         return; // نوقف العرض، ننتظر الرقم الذي يليه لفك الاستثناء بعد الـ 3
                     }
 
-                    // فك الاستثناء وإعطاء 7 خيارات من الخوارزمية
+                    // فك الاستثناء وإعطاء 7 خيارات مفرقة ومتنوعة
                     let markovRanked = getMarkovPredictions(inputVal);
-
-                    // أخذ أعلى 7 احتمالات
-                    for(let i = 0; i < 7; i++) {
-                        predictions.push(markovRanked[i].number);
-                    }
+                    predictions = getDiversePredictions(markovRanked, excludedSet);
 
                     // توليد نسب مئوية تنازلية للـ 7 خيارات
                     let currentProb = spinHistory.length >= 6 ? 94 : 85;
@@ -1084,13 +1148,23 @@
                     showRoundAlert(probs[0], true); // عرض التنبيه بناء على أعلى نسبة
 
                 } else {
-                    // في حال عدم ادخال رقم (عشوائي) يجلب 7 ارقام عشوائية
-                    while (predictions.length < 7) {
-                        let randNum = Math.floor(Math.random() * 37);
-                        if (!predictions.includes(randNum)) {
-                            predictions.push(randNum);
-                        }
+                    // استثناء أحدث الأرقام المسجلة سابقاً حتى في النمط العشوائي
+                    if (userInputsHistory.length > 0) {
+                        excludedSet.add(userInputsHistory[userInputsHistory.length - 1]);
                     }
+                    if (userInputsHistory.length > 1) {
+                        excludedSet.add(userInputsHistory[userInputsHistory.length - 2]);
+                    }
+
+                    // توليد كانديديت عشوائي بخلط الأرقام
+                    let randomCandidates = [];
+                    for (let i = 0; i <= 36; i++) {
+                        randomCandidates.push({ number: i, score: Math.random() });
+                    }
+                    randomCandidates.sort((a, b) => b.score - a.score);
+
+                    predictions = getDiversePredictions(randomCandidates, excludedSet);
+
                     let currentProb = Math.floor(Math.random() * (80 - 70 + 1)) + 70;
                     for(let i = 0; i < 7; i++) {
                         probs.push(currentProb);
