@@ -497,50 +497,57 @@
         
         .btn-link:hover { background: rgba(26, 5, 37, 0.9); border-color: var(--neon-primary); color: #fff; }
 
-        /* تعديل تصميم الإحصائيات يستوعب 9 خانات بشكل احترافي (شبكة 3×3) */
+        /* تصميم ديناميكي واحترافي يستوعب من 7 إلى 9 خيارات بشكل شبكي أنيق */
         .stats-box {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
             margin-top: 20px;
-            gap: 8px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .stat-item {
-            flex: 0 0 calc(33.333% - 8px); /* 3 في السطر */
-            background: rgba(5, 0, 10, 0.8);
+            background: rgba(8, 2, 16, 0.85);
             border: 1px solid #2a0845;
-            border-radius: 8px;
-            padding: 8px 5px;
+            border-radius: 10px;
+            padding: 10px 4px;
             text-align: center;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(5px);
+        }
+
+        .stat-item:hover {
+            transform: translateY(-3px) scale(1.03);
         }
         
         .stat-item .num {
             font-size: 1.6em;
             font-weight: bold;
             color: #fff;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             text-shadow: 0 0 10px #fff;
         }
         
         .stat-item .prob {
-            font-size: 0.7em;
+            font-size: 0.72em;
+            font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .high-prob { border-color: var(--neon-primary); box-shadow: 0 0 15px rgba(162, 0, 255, 0.15); }
+        .high-prob { border-color: var(--neon-primary); box-shadow: 0 0 12px rgba(162, 0, 255, 0.25); }
         .high-prob .prob { color: var(--neon-primary); }
         
-        .medium-prob { border-color: var(--neon-secondary); }
+        .medium-prob { border-color: var(--neon-secondary); box-shadow: 0 0 12px rgba(255, 0, 234, 0.2); }
         .medium-prob .prob { color: var(--neon-secondary); }
 
-        .low-prob { border-color: var(--neon-tertiary); box-shadow: 0 0 15px rgba(0, 234, 255, 0.15); }
+        .low-prob { border-color: var(--neon-tertiary); box-shadow: 0 0 12px rgba(0, 234, 255, 0.2); }
         .low-prob .prob { color: var(--neon-tertiary); }
 
-        .random-prob { border-color: var(--neon-quaternary); box-shadow: 0 0 15px rgba(0, 255, 136, 0.15); }
+        .random-prob { border-color: var(--neon-quaternary); box-shadow: 0 0 12px rgba(0, 255, 136, 0.2); }
         .random-prob .prob { color: var(--neon-quaternary); }
 
         .rotating-logo-container {
@@ -615,7 +622,6 @@
 </head>
 <body>
 
-    <!-- شاشة جلب التخمين (التحميل) -->
     <div id="loadingOverlay">
         <div class="ai-loader">
             <div class="ai-loader-circle"></div>
@@ -624,7 +630,6 @@
         <div class="loading-text">جاري محاكاة الصحن الدوار وجلب التخمين...</div>
     </div>
 
-    <!-- شاشة تسجيل الدخول وتأكيد الهوية -->
     <div id="loginOverlay">
         <div class="login-card">
             <h3>تسجيل الدخول والتحقق</h3>
@@ -643,15 +648,13 @@
         </div>
     </div>
 
-    <!-- رسالة التحذير الأساسية -->
     <div id="warningMsg" class="warning-alert">
         ⚠️ تحذير: يجب عليك إدخال الرقم الفائز الأخير لتفعيل خوارزمية المسافات وسلاسل ماركوف ومحاكاة عجلة Dubibet.<br>تم تفعيل التخمين العشوائي كبديل حالياً!
     </div>
 
-    <!-- تنبيه حالة الجولة واللقط الاحترافي لكل جولة -->
     <div id="roundAlert" class="round-alert">
         <span id="roundAlertIcon" style="font-size: 1.3em;">🎯</span>
-        <span id="roundAlertText">تم تحليل الجولة بنجاح</span>
+        <span id="roundAlertText">تم تحلیل الجولة بنجاح</span>
     </div>
 
     <div class="animated-background"></div>
@@ -664,8 +667,7 @@
             <img src="ses.jpg" alt="Roulette Board">
             
             <div class="grid-overlay" id="gridOverlay">
-                <!-- يتم حقن الخلايا عبر الجافاسكربت -->
-            </div>
+                </div>
         </div>
 
         <div class="controls-section">
@@ -678,18 +680,7 @@
             
             <a href="https://m.dubibet365.com/" target="_blank" class="btn btn-link">CONNECT TO DUBIBET SERVER</a>
 
-            <!-- تعديل ليحتوي على 9 خانات -->
-            <div class="stats-box" id="statsBox" style="display: none;">
-                <div class="stat-item high-prob"><div class="num" id="res1-num">--</div><div class="prob">P1: <span id="res1-prob">--%</span></div></div>
-                <div class="stat-item high-prob"><div class="num" id="res2-num">--</div><div class="prob">P2: <span id="res2-prob">--%</span></div></div>
-                <div class="stat-item medium-prob"><div class="num" id="res3-num">--</div><div class="prob">P3: <span id="res3-prob">--%</span></div></div>
-                <div class="stat-item medium-prob"><div class="num" id="res4-num">--</div><div class="prob">P4: <span id="res4-prob">--%</span></div></div>
-                <div class="stat-item low-prob"><div class="num" id="res5-num">--</div><div class="prob">P5: <span id="res5-prob">--%</span></div></div>
-                <div class="stat-item low-prob"><div class="num" id="res6-num">--</div><div class="prob">P6: <span id="res6-prob">--%</span></div></div>
-                <div class="stat-item low-prob"><div class="num" id="res7-num">--</div><div class="prob">P7: <span id="res7-prob">--%</span></div></div>
-                <div class="stat-item low-prob"><div class="num" id="res8-num">--</div><div class="prob">P8: <span id="res8-prob">--%</span></div></div>
-                <div class="stat-item random-prob"><div class="num" id="res9-num">--</div><div class="prob">P9: <span id="res9-prob">--%</span></div></div>
-            </div>
+            <div class="stats-box" id="statsBox" style="display: none;"></div>
             
             <div class="rotating-logo-container">
                 <img src="gfa.jpg" alt="AI Core Radar" class="rotating-logo">
@@ -943,9 +934,8 @@
             return scores;
         }
 
-        // خوارزمية اختيار الأرقام المفرقة والموزعة عبر فئات متوازنة مع تطبيق شرط الاستثناء
-        // تم توسيعها لتوليد 9 أرقام تخمين بدل 7
-        function getDiversePredictions(rankedCandidates, excludedSet) {
+        // خوارزمية اختيار الأرقام المفرقة والموزعة عبر فئات متوازنة مع دعم الديناميكية (من 7 إلى 9 أرقام)
+        function getDiversePredictions(rankedCandidates, excludedSet, targetCount = 7) {
             let valid = rankedCandidates.filter(c => !excludedSet.has(c.number));
 
             let lowBin = valid.filter(c => c.number >= 1 && c.number <= 12);
@@ -976,20 +966,20 @@
                 }
             }
 
-            // توزيع متوازن 3 + 3 + 3 لتغطية كل الفئات التسع
-            pickFromBin(lowBin, 3);
-            pickFromBin(midBin, 3);
-            pickFromBin(highBin, 3);
+            let perBin = Math.ceil(targetCount / 3);
+            pickFromBin(lowBin, perBin);
+            pickFromBin(midBin, perBin);
+            pickFromBin(highBin, perBin);
 
             for (let item of valid) {
-                if (selected.length >= 9) break;
+                if (selected.length >= targetCount) break;
                 if (!selectedNums.has(item.number)) {
                     selected.push(item);
                     selectedNums.add(item.number);
                 }
             }
 
-            return selected.slice(0, 9).map(item => item.number);
+            return selected.slice(0, targetCount).map(item => item.number);
         }
 
         timerProgress.style.strokeDashoffset = circumference;
@@ -1110,9 +1100,11 @@
                 }, 4000);
             }
 
-            // إخفاء النتائج القديمة
+            // إخفاء النتائج القديمة وتنظيف الصندوق
             document.querySelectorAll('.target-marker').forEach(el => el.remove());
-            document.getElementById('statsBox').style.display = 'none';
+            const statsBox = document.getElementById('statsBox');
+            statsBox.style.display = 'none';
+            statsBox.innerHTML = '';
 
             // تفعيل حالة التحميل (جلب التخمين) ومنع النقر
             isTimerRunning = true;
@@ -1128,6 +1120,9 @@
                 let predictions = [];
                 let probs = [];
                 let excludedSet = new Set();
+
+                // توليد عدد خيارات تخمين متغيرة ومحسوبة تلقائياً من 7 إلى 9 خيارات احترافية
+                const optionsCount = Math.floor(Math.random() * 3) + 7; // يعطي 7 أو 8 أو 9 احترافياً
 
                 if (hasValidInput) {
                     // تطبيق شرط الاستثناء: استثناء الرقم المكتوب حالياً
@@ -1154,13 +1149,13 @@
                         return; 
                     }
 
-                    // فك الاستثناء وإعطاء 9 خيارات مفرقة ومتنوعة تعتمد على العجلة والموقع
+                    // فك الاستثناء وإعطاء من 7 إلى 9 خيارات مفرقة ومتنوعة تعتمد على العجلة والموقع
                     let markovRanked = getMarkovPredictions(inputVal);
-                    predictions = getDiversePredictions(markovRanked, excludedSet);
+                    predictions = getDiversePredictions(markovRanked, excludedSet, optionsCount);
 
-                    // توليد نسب مئوية تنازلية للـ 9 خيارات
+                    // توليد نسب مئوية تنازلية متناسقة للخيارات المطلوبة
                     let currentProb = spinHistory.length >= 6 ? 94 : 85;
-                    for(let i = 0; i < 9; i++) {
+                    for(let i = 0; i < optionsCount; i++) {
                         probs.push(currentProb);
                         currentProb = currentProb - Math.floor(Math.random() * 4 + 2); 
                     }
@@ -1184,28 +1179,36 @@
                     }
                     randomCandidates.sort((a, b) => b.score - a.score);
 
-                    predictions = getDiversePredictions(randomCandidates, excludedSet);
+                    predictions = getDiversePredictions(randomCandidates, excludedSet, optionsCount);
 
                     let currentProb = Math.floor(Math.random() * (80 - 70 + 1)) + 70;
-                    for(let i = 0; i < 9; i++) {
+                    for(let i = 0; i < optionsCount; i++) {
                         probs.push(currentProb);
-                        currentProb = currentProb - Math.floor(Math.random() * 3 + 1);
+                        currentProb = currentProb - Math.floor(Math.random() * 3 + 2);
                     }
                     showRoundAlert(probs[0], false);
                 }
 
-                // عرض وتحديث الإحصائيات (9 خانات)
-                document.getElementById('statsBox').style.display = 'flex';
-                
-                for(let i = 1; i <= 9; i++) {
-                    let numId = `res${i}-num`;
-                    let probId = `res${i}-prob`;
-                    
-                    document.getElementById(numId).innerText = predictions[i-1];
-                    document.getElementById(probId).innerText = probs[i-1] + '%';
-                    
-                    drawMarker(predictions[i-1]); 
-                }
+                // عرض وتحديث الإحصائيات بالعدد الديناميكي (7 إلى 9 خانات) بشكل احترافي وأنيق
+                statsBox.style.display = 'grid';
+                statsBox.innerHTML = '';
+
+                predictions.forEach((num, idx) => {
+                    let probClass = 'high-prob';
+                    if (idx >= 2 && idx < 4) probClass = 'medium-prob';
+                    else if (idx >= 4 && idx < 6) probClass = 'low-prob';
+                    else if (idx >= 6) probClass = 'random-prob';
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = `stat-item ${probClass}`;
+                    itemDiv.innerHTML = `
+                        <div class="num">${num}</div>
+                        <div class="prob">P${idx + 1}: <span>${probs[idx]}%</span></div>
+                    `;
+                    statsBox.appendChild(itemDiv);
+
+                    drawMarker(num); 
+                });
 
             }, 2000); 
         }
