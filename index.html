@@ -497,7 +497,7 @@
         
         .btn-link:hover { background: rgba(26, 5, 37, 0.9); border-color: var(--neon-primary); color: #fff; }
 
-        /* تعديل تصميم الإحصائيات يستوعب 7 خانات بشكل احترافي */
+        /* تعديل تصميم الإحصائيات يستوعب 9 خانات بشكل احترافي (شبكة 3×3) */
         .stats-box {
             display: flex;
             flex-wrap: wrap;
@@ -507,7 +507,7 @@
         }
 
         .stat-item {
-            flex: 0 0 calc(25% - 8px); /* 4 في السطر كحد أقصى */
+            flex: 0 0 calc(33.333% - 8px); /* 3 في السطر */
             background: rgba(5, 0, 10, 0.8);
             border: 1px solid #2a0845;
             border-radius: 8px;
@@ -678,7 +678,7 @@
             
             <a href="https://m.dubibet365.com/" target="_blank" class="btn btn-link">CONNECT TO DUBIBET SERVER</a>
 
-            <!-- تعديل ليحتوي على 7 خانات -->
+            <!-- تعديل ليحتوي على 9 خانات -->
             <div class="stats-box" id="statsBox" style="display: none;">
                 <div class="stat-item high-prob"><div class="num" id="res1-num">--</div><div class="prob">P1: <span id="res1-prob">--%</span></div></div>
                 <div class="stat-item high-prob"><div class="num" id="res2-num">--</div><div class="prob">P2: <span id="res2-prob">--%</span></div></div>
@@ -686,7 +686,9 @@
                 <div class="stat-item medium-prob"><div class="num" id="res4-num">--</div><div class="prob">P4: <span id="res4-prob">--%</span></div></div>
                 <div class="stat-item low-prob"><div class="num" id="res5-num">--</div><div class="prob">P5: <span id="res5-prob">--%</span></div></div>
                 <div class="stat-item low-prob"><div class="num" id="res6-num">--</div><div class="prob">P6: <span id="res6-prob">--%</span></div></div>
-                <div class="stat-item random-prob"><div class="num" id="res7-num">--</div><div class="prob">P7: <span id="res7-prob">--%</span></div></div>
+                <div class="stat-item low-prob"><div class="num" id="res7-num">--</div><div class="prob">P7: <span id="res7-prob">--%</span></div></div>
+                <div class="stat-item low-prob"><div class="num" id="res8-num">--</div><div class="prob">P8: <span id="res8-prob">--%</span></div></div>
+                <div class="stat-item random-prob"><div class="num" id="res9-num">--</div><div class="prob">P9: <span id="res9-prob">--%</span></div></div>
             </div>
             
             <div class="rotating-logo-container">
@@ -942,6 +944,7 @@
         }
 
         // خوارزمية اختيار الأرقام المفرقة والموزعة عبر فئات متوازنة مع تطبيق شرط الاستثناء
+        // تم توسيعها لتوليد 9 أرقام تخمين بدل 7
         function getDiversePredictions(rankedCandidates, excludedSet) {
             let valid = rankedCandidates.filter(c => !excludedSet.has(c.number));
 
@@ -973,19 +976,20 @@
                 }
             }
 
+            // توزيع متوازن 3 + 3 + 3 لتغطية كل الفئات التسع
             pickFromBin(lowBin, 3);
-            pickFromBin(midBin, 2);
+            pickFromBin(midBin, 3);
             pickFromBin(highBin, 3);
 
             for (let item of valid) {
-                if (selected.length >= 7) break;
+                if (selected.length >= 9) break;
                 if (!selectedNums.has(item.number)) {
                     selected.push(item);
                     selectedNums.add(item.number);
                 }
             }
 
-            return selected.slice(0, 7).map(item => item.number);
+            return selected.slice(0, 9).map(item => item.number);
         }
 
         timerProgress.style.strokeDashoffset = circumference;
@@ -1150,15 +1154,15 @@
                         return; 
                     }
 
-                    // فك الاستثناء وإعطاء 7 خيارات مفرقة ومتنوعة تعتمد على العجلة والموقع
+                    // فك الاستثناء وإعطاء 9 خيارات مفرقة ومتنوعة تعتمد على العجلة والموقع
                     let markovRanked = getMarkovPredictions(inputVal);
                     predictions = getDiversePredictions(markovRanked, excludedSet);
 
-                    // توليد نسب مئوية تنازلية للـ 7 خيارات
+                    // توليد نسب مئوية تنازلية للـ 9 خيارات
                     let currentProb = spinHistory.length >= 6 ? 94 : 85;
-                    for(let i = 0; i < 7; i++) {
+                    for(let i = 0; i < 9; i++) {
                         probs.push(currentProb);
-                        currentProb = currentProb - Math.floor(Math.random() * 5 + 3); 
+                        currentProb = currentProb - Math.floor(Math.random() * 4 + 2); 
                     }
 
                     showRoundAlert(probs[0], true); 
@@ -1183,17 +1187,17 @@
                     predictions = getDiversePredictions(randomCandidates, excludedSet);
 
                     let currentProb = Math.floor(Math.random() * (80 - 70 + 1)) + 70;
-                    for(let i = 0; i < 7; i++) {
+                    for(let i = 0; i < 9; i++) {
                         probs.push(currentProb);
-                        currentProb = currentProb - Math.floor(Math.random() * 4 + 2);
+                        currentProb = currentProb - Math.floor(Math.random() * 3 + 1);
                     }
                     showRoundAlert(probs[0], false);
                 }
 
-                // عرض وتحديث الإحصائيات (7 خانات)
+                // عرض وتحديث الإحصائيات (9 خانات)
                 document.getElementById('statsBox').style.display = 'flex';
                 
-                for(let i = 1; i <= 7; i++) {
+                for(let i = 1; i <= 9; i++) {
                     let numId = `res${i}-num`;
                     let probId = `res${i}-prob`;
                     
