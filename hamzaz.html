@@ -1,181 +1,223 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>عداد انتهاء شغل سكربت كنترول</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
-​body {
-font-family: 'Tajawal', sans-serif;
-background: linear-gradient(135deg, #1e272e 0%, #2f3640 100%);
-color: #d2dae2;
-display: flex;
-justify-content: center;
-align-items: center;
-height: 100vh;
-margin: 0;
-text-align: center;
-}
-​.container {
-background-color: rgba(44, 62, 80, 0.8);
-padding: 50px 70px;
-border-radius: 20px;
-box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-border: 1px solid #485460;
-}
-​h1 {
-color: #0fb9b1;
-margin-bottom: 40px;
-font-size: 2.2em;
-}
-​.countdown {
-display: flex;
-gap: 20px;
-justify-content: center;
-direction: ltr; /* للحفاظ على الأرقام من اليسار لليمين */
-}
-​.time-box {
-background-color: #34495e;
-padding: 20px;
-border-radius: 12px;
-min-width: 90px;
-box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
-border-bottom: 3px solid #0fb9b1;
-}
-​.time-box span {
-font-size: 3.5em;
-font-weight: bold;
-color: #ecf0f1;
-display: block;
-margin-bottom: 5px;
-}
-​.time-box .label {
-font-size: 1.1em;
-color: #bdc3c7;
-direction: rtl; /* لعرض النصوص العربية بشكل صحيح */
-}
-​#message {
-display: none;
-margin-top: 30px;
-font-size: 2em;
-color: #2ecc71;
-font-weight: bold;
-animation: fadeIn 1s ease-in-out;
-}
-​#reset-btn {
-display: none;
-margin: 25px auto 0 auto;
-background-color: #0fb9b1;
-color: #fff;
-border: none;
-padding: 12px 30px;
-font-size: 1em;
-font-family: 'Tajawal', sans-serif;
-border-radius: 8px;
-cursor: pointer;
-box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-transition: background 0.3s ease;
-}
-​#reset-btn:hover {
-background-color: #0e9890;
-}
-​@keyframes fadeIn {
-from { opacity: 0; transform: translateY(-10px); }
-to { opacity: 1; transform: translateY(0); }
-}
-​/* دعم الشاشات الصغيرة (الهواتف) */
-@media (max-width: 600px) {
-.countdown {
-flex-wrap: wrap;
-}
-.container {
-padding: 30px 20px;
-}
-.time-box {
-min-width: 70px;
-padding: 15px;
-}
-.time-box span {
-font-size: 2.5em;
-}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عداد انتهاء شغل سكربت كنترول</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #1e272e 0%, #2f3640 100%);
+            color: #d2dae2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .container {
+            background-color: rgba(44, 62, 80, 0.8);
+            padding: 50px 70px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            border: 1px solid #485460;
+        }
+
+        h1 {
+            color: #0fb9b1;
+            margin-bottom: 40px;
+            font-size: 2.2em;
+        }
+
+        .countdown {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            direction: ltr;
+        }
+
+        .time-box {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 12px;
+            min-width: 90px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+            border-bottom: 3px solid #0fb9b1;
+        }
+
+        .time-box span {
+            font-size: 3.5em;
+            font-weight: bold;
+            color: #ecf0f1;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .time-box .label {
+            font-size: 1.1em;
+            color: #bdc3c7;
+            direction: rtl;
+        }
+
+        #message {
+            display: none;
+            margin-top: 30px;
+            font-size: 2em;
+            color: #2ecc71;
+            font-weight: bold;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        #resetBtn {
+            display: none;
+            margin-top: 25px;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #0fb9b1, #079992);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(15, 185, 177, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #resetBtn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(15, 185, 177, 0.6);
+        }
+
+        #resetBtn:active {
+            transform: translateY(0);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .countdown {
+                flex-wrap: wrap;
+            }
+            .container {
+                padding: 30px 20px;
+            }
+            .time-box {
+                min-width: 70px;
+                padding: 15px;
+            }
+            .time-box span {
+                font-size: 2.5em;
+            }
+            #message {
+                font-size: 1.5em;
+            }
+        }
+    </style>
 </head>
 <body>
-​<div class="container">
-<h1>العد التنازلي لانتهاء شغل سكربت كنترول</h1>
-​<div id="countdown" class="countdown">
-<div class="time-box">
-<span id="days">06</span>
-<div class="label">أيام</div>
-</div>
-<div class="time-box">
-<span id="hours">00</span>
-<div class="label">ساعات</div>
-</div>
-<div class="time-box">
-<span id="minutes">00</span>
-<div class="label">دقائق</div>
-</div>
-<div class="time-box">
-<span id="seconds">00</span>
-<div class="label">ثواني</div>
-</div>
-</div>
-​<div id="message">
-لقد انتهى وقت العمل على السكربت! 🚀
 
+    <div class="container">
+        <h1>العد التنازلي لانتهاء شغل سكربت كنترول</h1>
+        
+        <div id="countdown" class="countdown">
+            <div class="time-box">
+                <span id="days">06</span>
+                <div class="label">أيام</div>
+            </div>
+            <div class="time-box">
+                <span id="hours">00</span>
+                <div class="label">ساعات</div>
+            </div>
+            <div class="time-box">
+                <span id="minutes">00</span>
+                <div class="label">دقائق</div>
+            </div>
+            <div class="time-box">
+                <span id="seconds">00</span>
+                <div class="label">ثواني</div>
+            </div>
+        </div>
 
-<button id="reset-btn" onclick="resetTimer()">إعادة ضبط العداد (5 أيام)</button>
-</div>
-</div>
-​<script>
-const sixDaysInMillis = 6 * 24 * 60 * 60 * 1000;
-const fiveDaysInMillis = 5 * 24 * 60 * 60 * 1000;
-​// جلب وقت الهدف من التخزين المحلي حتى لا يتم تصفير العداد عند تحديث الصفحة
-let targetDate = localStorage.getItem('targetDate_ControlScript');
-​if (!targetDate) {
-targetDate = new Date().getTime() + sixDaysInMillis;
-localStorage.setItem('targetDate_ControlScript', targetDate);
-}
-​let countdownInterval;
-​function startCountdown() {
-countdownInterval = setInterval(() => {
-const now = new Date().getTime();
-const distance = targetDate - now;
-​// إذا انتهى الوقت
-if (distance < 0) {
-clearInterval(countdownInterval);
-document.getElementById("countdown").style.display = "none";
-document.getElementById("message").style.display = "block";
-document.getElementById("reset-btn").style.display = "inline-block";
-return;
-}
-​// حساب الأيام والساعات والدقائق والثواني
-const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-​// عرض الأرقام مع إضافة صفر على اليسار إذا كان الرقم أقل من 10
-document.getElementById("days").innerText = days.toString().padStart(2, '0');
-document.getElementById("hours").innerText = hours.toString().padStart(2, '0');
-document.getElementById("minutes").innerText = minutes.toString().padStart(2, '0');
-document.getElementById("seconds").innerText = seconds.toString().padStart(2, '0');
-}, 1000);
-}
-​// بدء العداد عند تحميل الصفحة
-startCountdown();
-​// دالة إعادة ضبط العداد لمدة 5 أيام
-function resetTimer() {
-targetDate = new Date().getTime() + fiveDaysInMillis;
-localStorage.setItem('targetDate_ControlScript', targetDate);
-document.getElementById("message").style.display = "none";
-document.getElementById("reset-btn").style.display = "none";
-document.getElementById("countdown").style.display = "flex";
-clearInterval(countdownInterval);
-startCountdown();
-}
-</script>
-​</body>
+        <div id="message">لقد انتهى وقت العمل على السكربت! 🚀</div>
+        <button id="resetBtn">🔄 إعادة التوقيت (5 أيام)</button>
+    </div>
+
+    <script>
+        // مدة العداد بالأيام
+        const INITIAL_DAYS = 6;
+        const RESET_DAYS = 5;
+
+        const STORAGE_KEY = 'targetDate_ControlScript';
+
+        let countdownInterval = null;
+
+        // دالة لحساب وقت الهدف
+        function setNewTarget(days) {
+            const target = new Date().getTime() + (days * 24 * 60 * 60 * 1000);
+            localStorage.setItem(STORAGE_KEY, target);
+            return target;
+        }
+
+        // دالة لتشغيل العداد
+        function startCountdown() {
+            // إخفاء الرسالة والزر عند البدء
+            document.getElementById("message").style.display = "none";
+            document.getElementById("resetBtn").style.display = "none";
+            document.getElementById("countdown").style.display = "flex";
+
+            let targetDate = parseInt(localStorage.getItem(STORAGE_KEY));
+
+            // إذا لم يكن هناك وقت محفوظ أو انتهى، ابدأ من جديد
+            if (!targetDate || targetDate < new Date().getTime()) {
+                targetDate = setNewTarget(INITIAL_DAYS);
+            }
+
+            // إيقاف أي عداد سابق
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            // تشغيل العداد
+            countdownInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = targetDate - now;
+
+                if (distance <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    document.getElementById("countdown").style.display = "none";
+                    document.getElementById("message").style.display = "block";
+                    document.getElementById("resetBtn").style.display = "inline-block";
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                document.getElementById("days").innerText = days.toString().padStart(2, '0');
+                document.getElementById("hours").innerText = hours.toString().padStart(2, '0');
+                document.getElementById("minutes").innerText = minutes.toString().padStart(2, '0');
+                document.getElementById("seconds").innerText = seconds.toString().padStart(2, '0');
+            }, 1000);
+        }
+
+        // زر إعادة التوقيت إلى 5 أيام
+        document.getElementById("resetBtn").addEventListener("click", () => {
+            setNewTarget(RESET_DAYS);
+            startCountdown();
+        });
+
+        // بدء العداد أول مرة
+        startCountdown();
+    </script>
+
+</body>
 </html>
